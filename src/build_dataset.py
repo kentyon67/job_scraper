@@ -1,11 +1,19 @@
-# src/build_dataset.py
 from pathlib import Path
 import csv
+import logging
 
 from bs4 import BeautifulSoup, Tag
 
-DETAIL_DIR = Path("data/raw")
-OUTPUT_PATH = Path("data/output/jobs.csv")
+from src.utils import RAW_DIR, OUTPUT_DIR
+
+DETAIL_DIR = RAW_DIR
+OUTPUT_PATH = OUTPUT_DIR / "jobs.csv"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def text_or_empty(tag: Tag | None) -> str:
@@ -63,16 +71,20 @@ def parse_file(html_path: Path) -> dict[str, str]:
     }
 
 
-def main() -> None:
+def collect_rows() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
 
     for html_path in sorted(DETAIL_DIR.glob("detail_*.html")):
-        row = parse_file(html_path)
-        rows.append(row)
+        rows.append(parse_file(html_path))
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("Collected %d rows from detail HTML files", len(rows))
+    return rows
 
-    with open(OUTPUT_PATH, "w", newline="", encoding="utf-8") as f:
+
+def save_csv(rows: list[dict[str, str]], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with output_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
             f,
             fieldnames=[
@@ -87,7 +99,12 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"[OK] CSV saved: {OUTPUT_PATH} rows={len(rows)}")
+    logger.info("CSV saved to %s rows=%d", output_path, len(rows))
+
+
+def main() -> None:
+    rows = collect_rows()
+    save_csv(rows, OUTPUT_PATH)
 
 
 if __name__ == "__main__":
