@@ -12,14 +12,12 @@ TIMEOUT = 20
 
 
 def build_session() -> requests.Session:
-    """共通ヘッダーを持つ Session を作成する。"""
     session = requests.Session()
     session.headers.update(HEADERS)
     return session
 
 
 def extract_job_id(url: str) -> str:
-    """URL末尾から job_id を取り出す。"""
     return url.rstrip("/").split("/")[-1]
 
 

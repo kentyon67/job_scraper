@@ -27,7 +27,7 @@ def main() -> None:
     fetch_detail_parser.add_argument(
         "--max-jobs",
         type=int,
-        default=50,
+        default=fetch_detail.DEFAULT_MAX_JOBS,
         help="取得する求人詳細ページ数の上限",
     )
 
