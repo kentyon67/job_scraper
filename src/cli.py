@@ -1,7 +1,7 @@
 import argparse
-
+from pathlib import Path
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
-
+from src.ai import summarize
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -47,7 +47,29 @@ def main() -> None:
         help="保存済みHTMLからCSVを生成する",
     )
 
+    summarize_purser = subparsers.add_parser(
+        "summarize",
+        help="保存済みCSVからAI要約つきのCSVを作成する"
+    )
+
+    summarize_purser.add_argument(
+        "--limit",
+        type = int ,
+        default = None
+    )
+
+    summarize_purser.add_argument(
+        "--input",
+        default="data/output/jobs.csv"
+    )
+
+    summarize_purser.add_argument(
+        "--output",
+        default="data/output/jobs_enriched.csv"
+    )
+
     args = parser.parse_args()
+
 
     if args.command == "fetch-list":
         fetch_list.main()
@@ -61,6 +83,12 @@ def main() -> None:
     elif args.command == "build":
         build_dataset.main()
 
+    elif args.command == "summarize":
+        summarize.main(
+        input_path = Path(args.input),
+        output_path = Path(args.output),
+        limit=args.limit,
+    )
 
 if __name__ == "__main__":
     main()
