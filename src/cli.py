@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
-from src.ai import summarize
+from src.ai import summarize, classify
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -68,6 +68,29 @@ def main() -> None:
         default="data/output/jobs_enriched.csv"
     )
 
+
+    classify_parser = subparsers.add_parser(
+        "classify",
+        help="AI分類つきのCSVを作成する",
+    )
+    classify_parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="分類する件数の上限",
+    )
+    classify_parser.add_argument(
+        "--input",
+        default="data/output/jobs_enriched.csv",
+        help="入力CSVのパス",
+    )
+    classify_parser.add_argument(
+        "--output",
+        default="data/output/jobs_classified.csv",
+        help="出力CSVのパス",
+    )
+
+
     args = parser.parse_args()
 
 
@@ -89,6 +112,13 @@ def main() -> None:
         output_path = Path(args.output),
         limit=args.limit,
     )
+
+    elif args.command == "classify":
+        classify.main(
+            input_path=Path(args.input),
+            output_path=Path(args.output),
+            limit=args.limit,
+        )
 
 if __name__ == "__main__":
     main()
