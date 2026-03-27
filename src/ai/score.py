@@ -1,6 +1,7 @@
 import csv
 import logging
 from pathlib import Path
+from src.user_profile import DEFAULT_USER_PROFILE, UserProfile
 
 
 DEFAULT_INPUT_PATH = Path("data/output/jobs_classified.csv")
@@ -112,6 +113,34 @@ def calculate_fit_score(row: dict) -> tuple[int, list[str]]:
     if contains_any_keyword(combined_text, ENTRY_KEYWORDS):
         score += 15
         reasons.append("学習・挑戦しやすい可能性")
+
+    location = row.get("location", "").lower()
+
+    preferred_locations = user_profile.get("preferred_locations", [])
+    allow_remote = user_profile.get("allow_remote", False)
+
+    location_match = False
+
+    # 地域一致
+    for loc in preferred_locations:
+        if loc.lower() in location:
+            location_match = True
+            break
+
+    # リモート判定
+    is_remote = "remote" in location or "リモート" in location
+
+    if location_match:
+        score += 20
+        reasons.append("希望勤務地と一致")
+
+    elif allow_remote and is_remote:
+        score += 15
+        reasons.append("リモート対応可能")
+
+    else:
+        score -= 10
+        reasons.append("勤務地ミスマッチ")
 
     return min(score, 100), reasons
 
