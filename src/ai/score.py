@@ -37,113 +37,198 @@ def calculate_job_score(row: dict) -> tuple[int, list[str]]:
     score = 0
     reasons = []
 
-    python_related = row.get("python_related", "")
-    ai_related = row.get("ai_related", "")
     job_category = row.get("job_category", "")
+    ai_related = row.get("ai_related", "")
+    location = row.get("location", "")
     ai_summary = row.get("ai_summary", "")
     qualifications = row.get("qualifications", "")
     description = row.get("description", "")
+    working_condition = row.get("working_condition", "")
 
-    combined_text = " ".join([ai_summary, qualifications, description])
+    combined_text = " ".join(
+        [ai_summary, qualifications, description, working_condition, location]
+    ).lower()
 
-    if python_related == "Yes":
-        score += 35
-        reasons.append("Python関連")
-
-    if ai_related == "Yes":
-        score += 25
-        reasons.append("AI関連")
-
+    # 1. 市場価値（role / category）
     category_scores = {
+        "AI/ML": 25,
+        "Data": 22,
         "Backend": 20,
-        "Data": 20,
-        "AI/ML": 20,
-        "Infra/SRE": 15,
-        "Security": 10,
-        "Frontend": 5,
-        "Mobile": 5,
-        "Product": 5,
-        "Other": 0,
+        "Infra/SRE": 18,
+        "Security": 18,
+        "Frontend": 12,
+        "Mobile": 12,
+        "Product": 10,
+        "Other": 5,
     }
 
-    category_score = category_scores.get(job_category, 0)
+    category_score = category_scores.get(job_category, 5)
     score += category_score
-    if category_score > 0:
-        reasons.append(f"{job_category}カテゴリ")
+    reasons.append(f"{job_category or 'Other'}カテゴリ")
 
+    # 2. AI関連の成長性
+    if ai_related == "Yes":
+        score += 15
+        reasons.append("AI関連")
+
+    # 3. グローバル性
     if contains_any_keyword(combined_text, GLOBAL_KEYWORDS):
         score += 20
         reasons.append("英語・グローバル要素あり")
 
+    # 4. 働き方の柔軟性
+    if "remote" in combined_text or "フルリモート" in combined_text:
+        score += 15
+        reasons.append("リモート可")
+    elif "hybrid" in combined_text or "ハイブリッド" in combined_text:
+        score += 10
+        reasons.append("ハイブリッド勤務")
+    elif "flex" in combined_text or "flexible" in combined_text or "フレックス" in combined_text:
+        score += 8
+        reasons.append("柔軟な勤務形態")
+
+    # 5. 初学者向け / 応募しやすさ
+    if contains_any_keyword(combined_text, ENTRY_KEYWORDS):
+        score += 10
+        reasons.append("エントリーしやすい可能性")
+
+    # 6. 情報の明確さ
+    text_volume = len(combined_text.strip())
+
+    if text_volume >= 800:
+        score += 15
+        reasons.append("情報量が豊富")
+    elif text_volume >= 400:
+        score += 10
+        reasons.append("情報量が十分")
+    elif text_volume >= 200:
+        score += 5
+        reasons.append("最低限の情報あり")
+
     return min(score, 100), reasons
 
-
-def calculate_fit_score(row: dict) -> tuple[int, list[str]]:
+def calculate_fit_score(row: dict, user_profile: UserProfile) -> tuple[int, list[str]]:
     score = 0
     reasons = []
 
     python_related = row.get("python_related", "")
     ai_related = row.get("ai_related", "")
     job_category = row.get("job_category", "")
+    location = row.get("location", "")
     ai_summary = row.get("ai_summary", "")
     qualifications = row.get("qualifications", "")
     description = row.get("description", "")
 
-    combined_text = " ".join([ai_summary, qualifications, description])
+    combined_text = " ".join([ai_summary, qualifications, description, location]).lower()
 
-    if python_related == "Yes":
-        score += 30
-        reasons.append("Python志向と一致")
-
-    if ai_related == "Yes":
-        score += 20
-        reasons.append("AI志向と一致")
-
-    if job_category in {"Backend", "Data", "AI/ML"}:
-        score += 20
-        reasons.append(f"{job_category}志向と一致")
-    elif job_category == "Infra/SRE":
-        score += 10
-        reasons.append("技術志向と一定一致")
-
-    if contains_any_keyword(combined_text, GLOBAL_KEYWORDS):
-        score += 15
-        reasons.append("外資・英語志向と一致")
-
-    if contains_any_keyword(combined_text, ENTRY_KEYWORDS):
-        score += 15
-        reasons.append("学習・挑戦しやすい可能性")
-
-    location = row.get("location", "").lower()
-
+    preferred_languages = user_profile.get("preferred_languages", [])
+    preferred_domains = user_profile.get("preferred_domains", [])
+    prefer_global = user_profile.get("prefer_global", False)
+    experience_level = user_profile.get("experience_level", "Beginner")
+    priority_mode = user_profile.get("priority_mode", "Balanced")
     preferred_locations = user_profile.get("preferred_locations", [])
     allow_remote = user_profile.get("allow_remote", False)
 
+    # 1. 言語一致
+    if "Python" in preferred_languages and python_related == "Yes":
+        score += 20
+        reasons.append("希望言語Pythonと一致")
+
+    # 将来拡張用:
+    # if "Go" in preferred_languages and go_related == "Yes":
+    #     score += 20
+
+    # 2. 領域一致
+    if job_category in preferred_domains:
+        score += 25
+        reasons.append(f"希望領域{job_category}と一致")
+
+    # 3. AI志向との一致
+    if "AI/ML" in preferred_domains and ai_related == "Yes":
+        score += 15
+        reasons.append("AI志向と一致")
+
+    # 4. グローバル志向との一致
+    has_global_signal = contains_any_keyword(combined_text, GLOBAL_KEYWORDS)
+    if prefer_global and has_global_signal:
+        score += 15
+        reasons.append("グローバル志向と一致")
+
+    # 5. 経験レベルとの一致
+    has_entry_signal = contains_any_keyword(combined_text, ENTRY_KEYWORDS)
+
+    if experience_level == "Beginner":
+        if has_entry_signal:
+            score += 20
+            reasons.append("初学者向け要素あり")
+        else:
+            if priority_mode == "Growth":
+                score += 8
+                reasons.append("背伸び枠として挑戦余地あり")
+            elif priority_mode == "Realistic":
+                score -= 5
+                reasons.append("現実性重視ではやや不一致")
+
+    elif experience_level == "Intermediate":
+        if has_entry_signal:
+            score += 10
+            reasons.append("比較的取り組みやすい")
+        else:
+            score += 12
+            reasons.append("中級者向けとして妥当")
+
+    elif experience_level == "Advanced":
+        if not has_entry_signal:
+            score += 15
+            reasons.append("経験者向け案件と一致")
+        else:
+            if priority_mode == "Growth":
+                score += 5
+                reasons.append("役割拡張の余地あり")
+
+    # 6. 優先モード補正
+    if priority_mode == "Growth":
+        if ai_related == "Yes":
+            score += 10
+            reasons.append("成長性の高い領域")
+        if not has_entry_signal:
+            score += 5
+            reasons.append("挑戦価値あり")
+
+    elif priority_mode == "Balanced":
+        score += 5
+        reasons.append("バランス重視設定")
+
+    elif priority_mode == "Realistic":
+        if has_entry_signal:
+            score += 10
+            reasons.append("現実的に狙いやすい")
+        else:
+            score -= 3
+            reasons.append("現実性重視ではやや難しめ")
+
+    # 7. 勤務地との一致
+    lower_location = location.lower()
     location_match = False
 
-    # 地域一致
     for loc in preferred_locations:
-        if loc.lower() in location:
+        if loc.lower() in lower_location:
             location_match = True
             break
 
-    # リモート判定
-    is_remote = "remote" in location or "リモート" in location
+    is_remote = ("remote" in lower_location) or ("リモート" in lower_location)
 
     if location_match:
-        score += 20
-        reasons.append("希望勤務地と一致")
-
-    elif allow_remote and is_remote:
         score += 15
-        reasons.append("リモート対応可能")
-
+        reasons.append("希望勤務地と一致")
+    elif allow_remote and is_remote:
+        score += 12
+        reasons.append("リモート許容条件と一致")
     else:
-        score -= 10
-        reasons.append("勤務地ミスマッチ")
+        score -= 5
+        reasons.append("勤務地条件がやや不一致")
 
-    return min(score, 100), reasons
-
+    return max(0, min(score, 100)), reasons
 
 def build_score_reason(job_reasons: list[str], fit_reasons: list[str]) -> str:
     job_reason_text = "、".join(job_reasons) if job_reasons else "大きな加点要素なし"
@@ -154,6 +239,7 @@ def build_score_reason(job_reasons: list[str], fit_reasons: list[str]) -> str:
 def score_jobs(
     input_path: Path,
     output_path: Path,
+    user_profile: UserProfile | None =None,
     limit: int | None = None,
 ) -> None:
     logger.info("Start scoring jobs")
@@ -176,6 +262,8 @@ def score_jobs(
         logger.info("Trimmed rows to %d by limit", len(rows))
 
     scored_rows = []
+    if user_profile is None:
+        user_profile = DEFAULT_USER_PROFILE
 
     for i, row in enumerate(rows, start=1):
         title = row.get("title", "")
@@ -183,9 +271,10 @@ def score_jobs(
 
         try:
             job_score, job_reasons = calculate_job_score(row)
-            fit_score, fit_reasons = calculate_fit_score(row)
-            score_reason = build_score_reason(job_reasons, fit_reasons)
+            fit_score, fit_reasons = calculate_fit_score(row,user_profile)
             total_score = job_score + fit_score
+            score_reason = build_score_reason(job_reasons, fit_reasons)
+
 
             new_row = dict(row)
             new_row["job_score"] = job_score
@@ -220,6 +309,7 @@ def main(
     input_path: Path = DEFAULT_INPUT_PATH,
     output_path: Path = DEFAULT_OUTPUT_PATH,
     limit: int | None = None,
+    user_profile: UserProfile = DEFAULT_USER_PROFILE,
 ) -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -227,8 +317,9 @@ def main(
     )
 
     score_jobs(
-        input_path=input_path,
-        output_path=output_path,
+        input_path = input_path,
+        output_path = output_path,
+        user_profile = user_profile ,
         limit=limit,
     )
 

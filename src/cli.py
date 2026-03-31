@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
+from src.user_profile import build_user_profile_from_args
 from src.ai import summarize, classify, score
 
 def main() -> None:
@@ -94,12 +95,7 @@ def main() -> None:
         "score",
         help="AI分類済みCSVからスコアつきCSVを作成する",
     )
-    score_parser.add_argument(
-        "--limit",
-        type=int,
-        default=None,
-        help="スコアリングする件数の上限",
-    )
+
     score_parser.add_argument(
         "--input",
         default="data/output/jobs_classified.csv",
@@ -110,6 +106,14 @@ def main() -> None:
         default="data/output/jobs_scored.csv",
         help="出力CSVのパス",
     )
+    score_parser.add_argument("--lang", nargs="+", default=None)
+    score_parser.add_argument("--domain", nargs="+", default=None)
+    score_parser.add_argument("--global-flag", action="store_true")
+    score_parser.add_argument("--exp", default=None)
+    score_parser.add_argument("--mode", default=None)
+    score_parser.add_argument("--loc", nargs="+", default=None)
+    score_parser.add_argument("--remote", action="store_true")
+    score_parser.add_argument("--limit", type=int, default=None)
 
     args = parser.parse_args()
 
@@ -141,13 +145,16 @@ def main() -> None:
         )
 
 
+
     elif args.command == "score":
+        user_profile = build_user_profile_from_args(args)
+
         score.main(
             input_path=Path(args.input),
             output_path=Path(args.output),
             limit=args.limit,
+            user_profile=user_profile,
         )
-
 
 if __name__ == "__main__":
     main()
