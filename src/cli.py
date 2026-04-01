@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
 from src.user_profile import build_user_profile_from_args
-from src.ai import summarize, classify, score
+from src.ai import summarize, classify, score, compare
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -115,6 +115,32 @@ def main() -> None:
     score_parser.add_argument("--remote", action="store_true")
     score_parser.add_argument("--limit", type=int, default=None)
 
+    compare_parser = subparsers.add_parser(
+        "compare",
+        help="スコア済みCSVを比較用に並び替えて出力する",
+    )
+    compare_parser.add_argument(
+        "--input",
+        default="data/output/jobs_scored.csv",
+        help="入力CSVのパス",
+    )
+    compare_parser.add_argument(
+        "--output",
+        default="data/output/jobs_compared.csv",
+        help="出力CSVのパス",
+    )
+    compare_parser.add_argument(
+        "--sort-by",
+        default="total_score",
+        choices=["total_score", "job_score", "fit_score"],
+        help="並び替え基準",
+    )
+    compare_parser.add_argument(
+        "--top",
+        type=int,
+        default=None,
+        help="上位何件を出力するか",
+    )
     args = parser.parse_args()
 
 
@@ -144,8 +170,6 @@ def main() -> None:
             limit=args.limit,
         )
 
-
-
     elif args.command == "score":
         user_profile = build_user_profile_from_args(args)
 
@@ -154,6 +178,14 @@ def main() -> None:
             output_path=Path(args.output),
             limit=args.limit,
             user_profile=user_profile,
+        )
+
+    elif args.command == "compare":
+        compare.main(
+            input_path=Path(args.input),
+            output_path=Path(args.output),
+            sort_by=args.sort_by,
+            top=args.top,
         )
 
 if __name__ == "__main__":
