@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
 from src.user_profile import build_user_profile_from_args
-from src.ai import summarize, classify, score, compare
+from src.ai import summarize, classify, score, compare, pipeline
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -141,7 +141,69 @@ def main() -> None:
         default=None,
         help="上位何件を出力するか",
     )
+
+    pipeline_parser = subparsers.add_parser(
+        "pipeline",
+        help="要約・分類・スコアリング・比較を一括実行する",
+    )
+
+    pipeline_parser.add_argument(
+        "--input",
+        default="data/output/jobs.csv",
+        help="入力CSVのパス",
+    )
+    pipeline_parser.add_argument(
+        "--enriched-output",
+        default="data/output/jobs_enriched.csv",
+        help="要約出力CSVのパス",
+    )
+    pipeline_parser.add_argument(
+        "--classified-output",
+        default="data/output/jobs_classified.csv",
+        help="分類出力CSVのパス",
+    )
+    pipeline_parser.add_argument(
+        "--scored-output",
+        default="data/output/jobs_scored.csv",
+        help="スコア出力CSVのパス",
+    )
+    pipeline_parser.add_argument(
+        "--compared-output",
+        default="data/output/jobs_compared.csv",
+        help="比較出力CSVのパス",
+    )
+    pipeline_parser.add_argument(
+        "--sort-by",
+        default="total_score",
+        choices=["total_score", "job_score", "fit_score"],
+        help="compareの並び替え基準",
+    )
+    pipeline_parser.add_argument(
+        "--top",
+        type=int,
+        default=None,
+        help="compareで出力する上位件数",
+    )
+    pipeline_parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="各ステップで処理する件数の上限",
+    )
+
+    pipeline_parser.add_argument("--lang", nargs="+", default=None)
+    pipeline_parser.add_argument("--domain", nargs="+", default=None)
+    pipeline_parser.add_argument("--global-flag", action="store_true")
+    pipeline_parser.add_argument("--exp", default=None)
+    pipeline_parser.add_argument("--mode", default=None)
+    pipeline_parser.add_argument("--loc", nargs="+", default=None)
+    pipeline_parser.add_argument("--remote", action="store_true")
+
+
+
     args = parser.parse_args()
+
+
 
 
     if args.command == "fetch-list":
@@ -188,5 +250,19 @@ def main() -> None:
             top=args.top,
         )
 
+    elif args.command == "pipeline":
+        user_profile = build_user_profile_from_args(args)
+
+        pipeline.main(
+            user_profile= user_profile,
+            input_path=Path(args.input),
+            enriched_path=Path(args.enriched_output),
+            classified_path=Path(args.classified_output),
+            scored_path=Path(args.scored_output),
+            compared_path=Path(args.compared_output),
+            limit= args.limit,
+            sort_by= args.sort_by,
+            top= args.top,
+        )
 if __name__ == "__main__":
     main()
