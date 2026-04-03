@@ -144,61 +144,138 @@ def main() -> None:
 
     pipeline_parser = subparsers.add_parser(
         "pipeline",
-        help="要約・分類・スコアリング・比較を一括実行する",
+        help="URL取得から比較まで一括実行する",
     )
 
     pipeline_parser.add_argument(
-        "--input",
-        default="data/output/jobs.csv",
-        help="入力CSVのパス",
+        "--mode",
+        default="full",
+        choices=["full", "analysis"],
+        help="full: URL取得から比較まで / analysis: CSV分析部分のみ",
     )
+
+    pipeline_parser.add_argument(
+        "--url",
+        default="https://job-boards.greenhouse.io/paypay",
+        help="求人一覧ページのURL",
+    )
+
+    pipeline_parser.add_argument(
+        "--list-output",
+        default="data/raw/list.html",
+        help="一覧HTMLの保存先パス",
+    )
+
+    pipeline_parser.add_argument(
+        "--detail-dir",
+        default="data/raw",
+        help="詳細HTML保存ディレクトリ",
+    )
+
+    pipeline_parser.add_argument(
+        "--jobs-output",
+        default="data/output/jobs.csv",
+        help="buildで出力するCSVパス",
+    )
+
     pipeline_parser.add_argument(
         "--enriched-output",
         default="data/output/jobs_enriched.csv",
-        help="要約出力CSVのパス",
+        help="summarize出力CSVのパス",
     )
+
     pipeline_parser.add_argument(
         "--classified-output",
         default="data/output/jobs_classified.csv",
-        help="分類出力CSVのパス",
+        help="classify出力CSVのパス",
     )
+
     pipeline_parser.add_argument(
         "--scored-output",
         default="data/output/jobs_scored.csv",
-        help="スコア出力CSVのパス",
+        help="score出力CSVのパス",
     )
+
     pipeline_parser.add_argument(
         "--compared-output",
         default="data/output/jobs_compared.csv",
-        help="比較出力CSVのパス",
+        help="compare出力CSVのパス",
     )
+
+    pipeline_parser.add_argument(
+        "--max-jobs",
+        type=int,
+        default=50,
+        help="詳細取得する求人件数の上限",
+    )
+
+    pipeline_parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="分析ステップで処理する件数の上限",
+    )
+
     pipeline_parser.add_argument(
         "--sort-by",
         default="total_score",
         choices=["total_score", "job_score", "fit_score"],
         help="compareの並び替え基準",
     )
+
     pipeline_parser.add_argument(
         "--top",
         type=int,
         default=None,
         help="compareで出力する上位件数",
     )
+
+    # user_profile 用
     pipeline_parser.add_argument(
-        "--limit",
-        type=int,
+        "--lang",
+        nargs="+",
         default=None,
-        help="各ステップで処理する件数の上限",
+        help="希望言語（例: python sql）",
     )
 
-    pipeline_parser.add_argument("--lang", nargs="+", default=None)
-    pipeline_parser.add_argument("--domain", nargs="+", default=None)
-    pipeline_parser.add_argument("--global-flag", action="store_true")
-    pipeline_parser.add_argument("--exp", default=None)
-    pipeline_parser.add_argument("--mode", default=None)
-    pipeline_parser.add_argument("--loc", nargs="+", default=None)
-    pipeline_parser.add_argument("--remote", action="store_true")
+    pipeline_parser.add_argument(
+        "--domain",
+        nargs="+",
+        default=None,
+        help="希望領域（例: backend ai data）",
+    )
 
+    pipeline_parser.add_argument(
+        "--global-flag",
+        action="store_true",
+        help="グローバル志向なら指定",
+    )
+
+    pipeline_parser.add_argument(
+        "--exp",
+        default=None,
+        help="経験レベル（例: beginner intermediate advanced）",
+    )
+
+    pipeline_parser.add_argument(
+        "--mode-profile",
+        dest="mode_profile",
+        default=None,
+        help="priority_mode（例: growth balanced realistic）",
+    )
+
+    pipeline_parser.add_argument(
+        "--loc",
+        nargs="+",
+        default=None,
+        help="希望勤務地（例: tokyo osaka remote）",
+    )
+
+    pipeline_parser.add_argument(
+        "--remote",
+        action="store_true",
+        help="リモート勤務を許容するなら指定",
+    )
 
 
     args = parser.parse_args()
@@ -250,19 +327,28 @@ def main() -> None:
             top=args.top,
         )
 
+
     elif args.command == "pipeline":
+
         user_profile = build_user_profile_from_args(args)
 
         pipeline.main(
-            user_profile= user_profile,
-            input_path=Path(args.input),
+
+            mode=args.mode,
+            user_profile=user_profile,
+            url=args.url,
+            list_out_path=Path(args.list_output),
+            detail_dir=Path(args.detail_dir),
+            jobs_csv_path=Path(args.jobs_output),
             enriched_path=Path(args.enriched_output),
             classified_path=Path(args.classified_output),
             scored_path=Path(args.scored_output),
             compared_path=Path(args.compared_output),
-            limit= args.limit,
-            sort_by= args.sort_by,
-            top= args.top,
+            max_jobs=args.max_jobs,
+            limit=args.limit,
+            sort_by=args.sort_by,
+            top=args.top,
         )
+
 if __name__ == "__main__":
     main()

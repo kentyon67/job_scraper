@@ -6,13 +6,10 @@ from bs4 import BeautifulSoup, Tag
 
 from src.utils import RAW_DIR, OUTPUT_DIR
 
-DETAIL_DIR = RAW_DIR
-OUTPUT_PATH = OUTPUT_DIR / "jobs.csv"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+DEFAULT_DETAIL_DIR = RAW_DIR
+DEFAULT_OUTPUT_PATH = OUTPUT_DIR / "jobs.csv"
+
 logger = logging.getLogger(__name__)
 
 
@@ -71,17 +68,17 @@ def parse_file(html_path: Path) -> dict[str, str]:
     }
 
 
-def collect_rows() -> list[dict[str, str]]:
+def collect_rows(detail_dir: Path = DEFAULT_DETAIL_DIR) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
 
-    for html_path in sorted(DETAIL_DIR.glob("detail_*.html")):
+    for html_path in sorted(detail_dir.glob("detail_*.html")):
         rows.append(parse_file(html_path))
 
     logger.info("Collected %d rows from detail HTML files", len(rows))
     return rows
 
 
-def save_csv(rows: list[dict[str, str]], output_path: Path) -> None:
+def save_csv(rows: list[dict[str, str]], output_path: Path = DEFAULT_OUTPUT_PATH) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with output_path.open("w", newline="", encoding="utf-8") as f:
@@ -102,9 +99,17 @@ def save_csv(rows: list[dict[str, str]], output_path: Path) -> None:
     logger.info("CSV saved to %s rows=%d", output_path, len(rows))
 
 
-def main() -> None:
-    rows = collect_rows()
-    save_csv(rows, OUTPUT_PATH)
+def main(
+    detail_dir: Path = DEFAULT_DETAIL_DIR,
+    output_path: Path = DEFAULT_OUTPUT_PATH,
+) -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+    )
+
+    rows = collect_rows(detail_dir=detail_dir)
+    save_csv(rows, output_path=output_path)
 
 
 if __name__ == "__main__":

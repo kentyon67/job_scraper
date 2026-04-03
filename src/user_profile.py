@@ -23,7 +23,7 @@ DEFAULT_USER_PROFILE: UserProfile = {
     "allow_remote": False,
 }
 
-def build_user_profile_from_args(args:Namespace) -> UserProfile:
+def build_user_profile_from_args(args) -> UserProfile:
     profile = DEFAULT_USER_PROFILE.copy()
 
     if args.lang:
@@ -38,11 +38,13 @@ def build_user_profile_from_args(args:Namespace) -> UserProfile:
     if args.exp:
         profile["experience_level"] = args.exp.lower()
 
-    if args.mode:
+    if hasattr(args, "mode_profile") and args.mode_profile:
+        profile["priority_mode"] = args.mode_profile.lower()
+    elif hasattr(args, "mode") and args.mode:
         profile["priority_mode"] = args.mode.lower()
 
     if args.loc:
-        profile["preferred_locations"] = [loc.lower for loc in args.loc]
+        profile["preferred_locations"] = [loc.lower() for loc in args.loc]
 
     if args.remote:
         profile["allow_remote"] = True

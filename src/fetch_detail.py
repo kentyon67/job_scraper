@@ -16,15 +16,11 @@ from src.utils import (
     TIMEOUT,
 )
 
-LIST_PATH = BASE_DIR / "data" / "raw" / "list.html"
+DEFAULT_LIST_PATH = BASE_DIR / "data" / "raw" / "list.html"
 FAIL_LOG = LOG_DIR / "failures.csv"
-BASE_URL = "https://job-boards.greenhouse.io"
+DEFAULT_BASE_URL = "https://job-boards.greenhouse.io"
 DEFAULT_MAX_JOBS = 50
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 
@@ -33,18 +29,26 @@ def load_list_html(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def extract_job_urls(list_html: str) -> list[str]:
+def extract_job_urls(list_html: str, base_url: str = DEFAULT_BASE_URL) -> list[str]:
     soup = BeautifulSoup(list_html, "lxml")
 
     job_urls: list[str] = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
         if "/jobs/" in href:
-            job_urls.append(urljoin(BASE_URL, href))
+            job_urls.append(urljoin(base_url, href))
 
     unique_urls = list(dict.fromkeys(job_urls))
     logger.info("Extracted %d unique job URLs", len(unique_urls))
     return unique_urls
+
+
+def extract_job_urls_from_file(
+    list_path: Path,
+    base_url: str = DEFAULT_BASE_URL,
+) -> list[str]:
+    list_html = load_list_html(list_path)
+    return extract_job_urls(list_html, base_url=base_url)
 
 
 def log_failure(
@@ -86,7 +90,11 @@ def log_failure(
         )
 
 
-def fetch_and_save_detail(session: requests.Session, index: int, url: str) -> None:
+def fetch_and_save_detail(
+    session: requests.Session,
+    index: int,
+    url: str,
+) -> None:
     job_id = extract_job_id(url)
     logger.info("[%d] job_id=%s fetching: %s", index, job_id, url)
 
@@ -107,17 +115,94 @@ def fetch_and_save_detail(session: requests.Session, index: int, url: str) -> No
         log_failure(index, job_id, url, e, None)
 
 
-def main(max_jobs: int = DEFAULT_MAX_JOBS) -> None:
-    session = build_session()
-    list_html = load_list_html(LIST_PATH)
-    job_urls = extract_job_urls(list_html)
+def fetch_details_from_urls(
+    urls: list[str],
+    max_jobs: int = DEFAULT_MAX_JOBS,
+    session: requests.Session | None = None,
+) -> list[str]:
+    """
+    URLリストから求人詳細を取得・保存する。
+    保存対象として処理したURL一覧を返す。
+    """
+    if session is None:
+        session = build_session()
 
-    logger.info("Processing up to %d jobs", max_jobs)
+    target_urls = urls[:max_jobs]
+    logger.info("Processing %d detail URLs", len(target_urls))
 
-    for i, url in enumerate(job_urls[:max_jobs]):
+    for i, url in enumerate(target_urls, start=1):
         fetch_and_save_detail(session, i, url)
 
-    logger.info("Done")
+    return target_urls
+
+
+def fetch_details_from_list_path(
+    list_path: Path = DEFAULT_LIST_PATH,
+    max_jobs: int = DEFAULT_MAX_JOBS,
+    base_url: str = DEFAULT_BASE_URL,
+    session: requests.Session | None = None,
+) -> list[str]:
+    """
+    1つの一覧HTMLファイルから求人URLを抽出し、詳細取得を行う。
+    """
+    job_urls = extract_job_urls_from_file(list_path, base_url=base_url)
+    return fetch_details_from_urls(job_urls, max_jobs=max_jobs, session=session)
+
+
+def fetch_details_from_multiple_list_paths(
+    list_paths: list[Path],
+    max_jobs_per_list: int = DEFAULT_MAX_JOBS,
+    base_url: str = DEFAULT_BASE_URL,
+) -> list[str]:
+    """
+    複数の一覧HTMLファイルを順番に処理する。
+    成功可否にかかわらず、対象として処理したURL一覧を返す。
+    """
+    session = build_session()
+    processed_urls: list[str] = []
+
+    for i, list_path in enumerate(list_paths, start=1):
+        logger.info("Processing list file %d/%d: %s", i, len(list_paths), list_path)
+
+        try:
+            job_urls = extract_job_urls_from_file(list_path, base_url=base_url)
+            target_urls = fetch_details_from_urls(
+                job_urls,
+                max_jobs=max_jobs_per_list,
+                session=session,
+            )
+            processed_urls.extend(target_urls)
+
+        except OSError as e:
+            logger.exception("Failed to process list file %s: %s", list_path, e)
+
+    return processed_urls
+
+
+def main(
+    list_path: Path | None = DEFAULT_LIST_PATH,
+    list_paths: list[Path] | None = None,
+    max_jobs: int = DEFAULT_MAX_JOBS,
+    base_url: str = DEFAULT_BASE_URL,
+) -> list[str]:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+    )
+
+    if list_paths:
+        return fetch_details_from_multiple_list_paths(
+            list_paths=list_paths,
+            max_jobs_per_list=max_jobs,
+            base_url=base_url,
+        )
+
+    target_list_path = list_path or DEFAULT_LIST_PATH
+    return fetch_details_from_list_path(
+        list_path=target_list_path,
+        max_jobs=max_jobs,
+        base_url=base_url,
+    )
 
 
 if __name__ == "__main__":
