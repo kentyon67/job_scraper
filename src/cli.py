@@ -161,6 +161,11 @@ def main() -> None:
     )
 
     pipeline_parser.add_argument(
+        "--urls",
+        nargs= "+",
+        default = None ,
+    )
+    pipeline_parser.add_argument(
         "--list-output",
         default="data/raw/list.html",
         help="一覧HTMLの保存先パス",
@@ -337,6 +342,7 @@ def main() -> None:
             mode=args.mode,
             user_profile=user_profile,
             url=args.url,
+            urls=args.urls,
             list_out_path=Path(args.list_output),
             detail_dir=Path(args.detail_dir),
             jobs_csv_path=Path(args.jobs_output),

@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 
+from pip._internal.utils import urls
+
 from src import fetch_list, fetch_detail, build_dataset
 from src.ai import summarize, classify, score, compare
 from src.user_profile import UserProfile
@@ -21,8 +23,55 @@ DEFAULT_MAX_JOBS = 50
 
 logger = logging.getLogger(__name__)
 
+
+def ensure_non_empty_list(values: list, label: str) -> None:
+    if not values:
+        raise RuntimeError(f"{label} is empty")
+
+
+def ensure_file_exists(path: Path, label: str) -> None:
+    if not path.exists():
+        raise FileNotFoundError(f"{label} not found: {path}")
+
+
+def ensure_non_empty_file(path: Path, label: str) -> None:
+    ensure_file_exists(path, label)
+
+    if path.stat().st_size == 0:
+        raise RuntimeError(f"{label} is empty: {path}")
+
+
+def validate_positive_int(value: int | None, label: str) -> None:
+    if value is not None and value <= 0:
+        raise ValueError(f"{label} must be positive: {value}")
+
+def validate_pipeline_inputs(
+    mode: str,
+    url: str,
+    urls: list[str] | None,
+    max_jobs: int,
+    limit: int | None,
+    top: int | None,
+) -> None:
+    if mode not in {"full", "analysis"}:
+        raise ValueError(f"Unsupported mode: {mode}")
+
+    if mode == "full":
+        has_single_url = bool(url)
+        has_multiple_urls = bool(urls)
+
+        if not has_single_url and not has_multiple_urls:
+            raise ValueError("full mode requires --url or --urls")
+
+    validate_positive_int(max_jobs, "max_jobs")
+    validate_positive_int(limit, "limit")
+    validate_positive_int(top, "top")
+
+
+
 def run_collection_pipeline(
     url: str = DEFAULT_URL,
+    urls: list[str] | None = None,
     list_out_path: Path = DEFAULT_LIST_OUT_PATH,
     detail_dir: Path = DEFAULT_DETAIL_DIR,
     jobs_csv_path: Path = DEFAULT_INPUT_CSV_PATH,
@@ -30,25 +79,40 @@ def run_collection_pipeline(
 ) -> None:
     logger.info("Start collection pipeline")
     logger.info("URL: %s", url)
+    logger.info("URLs: %s", urls)
     logger.info("List out path: %s", list_out_path)
     logger.info("Detail dir: %s", detail_dir)
     logger.info("Jobs CSV path: %s", jobs_csv_path)
     logger.info("Max jobs: %s", max_jobs)
 
-    list_paths = fetch_list.main(
-        url= url ,
-        out_path= list_out_path ,
+    validate_positive_int(max_jobs, "max_jobs")
+
+    if urls:
+        list_paths = fetch_list.main(
+            urls=urls,
+            out_dir=list_out_path.parent,
+        )
+    else:
+        list_paths = fetch_list.main(
+            url=url,
+            out_path=list_out_path,
+        )
+
+    ensure_non_empty_list(list_paths, "list_paths")
+
+    processed_urls = fetch_detail.main(
+        list_paths=list_paths,
+        max_jobs=max_jobs,
     )
 
-    fetch_detail.main(
-        list_paths = list_paths ,
-        max_jobs= max_jobs ,
-    )
+    ensure_non_empty_list(processed_urls, "processed_urls")
 
     build_dataset.main(
-        detail_dir= detail_dir ,
-        output_path= jobs_csv_path ,
+        detail_dir=detail_dir,
+        output_path=jobs_csv_path,
     )
+
+    ensure_non_empty_file(jobs_csv_path, "jobs_csv")
 
     logger.info("Collection pipeline completed")
 
@@ -75,31 +139,44 @@ def run_analysis_pipeline(
     logger.info("Sort by: %s", sort_by)
     logger.info("Top: %s", top)
 
+    validate_positive_int(limit, "limit")
+    validate_positive_int(top, "top")
+
+    ensure_non_empty_file(input_path, "analysis_input_csv")
+
     summarize.main(
-        input_path= input_path ,
-        output_path= enriched_path ,
-        limit= limit ,
+        input_path=input_path,
+        output_path=enriched_path,
+        limit=limit,
     )
+
+    ensure_non_empty_file(enriched_path, "enriched_csv")
 
     classify.main(
-        input_path= enriched_path,
-        output_path= classified_path ,
-        limit= limit ,
+        input_path=enriched_path,
+        output_path=classified_path,
+        limit=limit,
     )
+
+    ensure_non_empty_file(classified_path, "classified_csv")
 
     score.main(
-        user_profile= user_profile ,
-        input_path= classified_path ,
-        output_path= scored_path ,
-        limit= limit ,
+        user_profile=user_profile,
+        input_path=classified_path,
+        output_path=scored_path,
+        limit=limit,
     )
 
+    ensure_non_empty_file(scored_path, "scored_csv")
+
     compare.main(
-        input_path= scored_path ,
-        output_path= compared_path ,
-        sort_by= sort_by ,
-        top= top,
+        input_path=scored_path,
+        output_path=compared_path,
+        sort_by=sort_by,
+        top=top,
     )
+
+    ensure_non_empty_file(compared_path, "compared_csv")
 
     logger.info("Analysis pipeline completed")
 
@@ -108,6 +185,7 @@ def run_analysis_pipeline(
 def run_full_pipeline(
     user_profile: UserProfile,
     url: str = DEFAULT_URL,
+    urls: list[str] | None = None,
     list_out_path: Path = DEFAULT_LIST_OUT_PATH,
     detail_dir: Path = DEFAULT_DETAIL_DIR,
     jobs_csv_path: Path = DEFAULT_INPUT_CSV_PATH,
@@ -124,6 +202,7 @@ def run_full_pipeline(
 
     run_collection_pipeline(
         url= url,
+        urls= urls,
         list_out_path= list_out_path ,
         detail_dir= detail_dir ,
         jobs_csv_path= jobs_csv_path ,
@@ -144,10 +223,12 @@ def run_full_pipeline(
 
     logger.info("Full pipeline completed")
 
+
 def main(
     mode: str,
     user_profile: UserProfile,
     url: str = DEFAULT_URL,
+    urls: list[str] | None = None,
     list_out_path: Path = DEFAULT_LIST_OUT_PATH,
     detail_dir: Path = DEFAULT_DETAIL_DIR,
     jobs_csv_path: Path = DEFAULT_INPUT_CSV_PATH,
@@ -165,36 +246,51 @@ def main(
         format="%(asctime)s %(levelname)s %(name)s - %(message)s",
     )
 
-    if mode == "analysis":
-        run_analysis_pipeline(
-            user_profile= user_profile ,
-            input_path= list_out_path ,
-            enriched_path= enriched_path ,
-            classified_path= classified_path ,
-            scored_path= scored_path ,
-            compared_path= compared_path ,
-            limit= limit ,
-            sort_by= sort_by ,
-            top= top ,
+    try:
+        validate_pipeline_inputs(
+            mode=mode,
+            url=url,
+            urls=urls,
+            max_jobs=max_jobs,
+            limit=limit,
+            top=top,
         )
-        return
 
-    if mode == "full":
-        run_full_pipeline(
-            user_profile= user_profile ,
-            url= url ,
-            list_out_path= list_out_path ,
-            detail_dir= detail_dir ,
-            jobs_csv_path= jobs_csv_path ,
-            enriched_path= enriched_path ,
-            classified_path= classified_path ,
-            scored_path= scored_path ,
-            compared_path= compared_path ,
-            max_jobs= max_jobs ,
-            limit= limit ,
-            sort_by= sort_by ,
-            top= top ,
-        )
-        return
+        if mode == "analysis":
+            run_analysis_pipeline(
+                user_profile=user_profile,
+                input_path=jobs_csv_path,
+                enriched_path=enriched_path,
+                classified_path=classified_path,
+                scored_path=scored_path,
+                compared_path=compared_path,
+                limit=limit,
+                sort_by=sort_by,
+                top=top,
+            )
+            return
 
-    raise ValueError(f"Unsupported mode: {mode}")
+        if mode == "full":
+            run_full_pipeline(
+                user_profile=user_profile,
+                url=url,
+                urls=urls,
+                list_out_path=list_out_path,
+                detail_dir=detail_dir,
+                jobs_csv_path=jobs_csv_path,
+                enriched_path=enriched_path,
+                classified_path=classified_path,
+                scored_path=scored_path,
+                compared_path=compared_path,
+                max_jobs=max_jobs,
+                limit=limit,
+                sort_by=sort_by,
+                top=top,
+            )
+            return
+
+        raise ValueError(f"Unsupported mode: {mode}")
+
+    except Exception as e:
+        logger.exception("Pipeline failed: %s", e)
+        raise
