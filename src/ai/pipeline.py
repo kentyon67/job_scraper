@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pip._internal.utils import urls
 
-from src import fetch_list, fetch_detail, build_dataset
+from src import fetch_list, fetch_detail, build_dataset, retry_failed
 from src.ai import summarize, classify, score, compare
 from src.user_profile import UserProfile
 
@@ -22,6 +22,18 @@ DEFAULT_COMPARED_PATH = Path("data/output/jobs_compared.csv")
 DEFAULT_MAX_JOBS = 50
 
 logger = logging.getLogger(__name__)
+
+def clear_file_exists(path: Path) -> None:
+    if not path.exists():
+       path.unlink()
+       logger.info("Removed old file: %s", path)
+
+def ensure_has_detail_html(detail_dir: Path) -> None:
+    ensure_file_exists(detail_dir, "detail_dir")
+
+    html_files = list(detail_dir.glob("detail_*.html"))
+    if not html_files:
+        raise ValueError(f"No detail HTML files found in: {detail_dir}")
 
 
 def ensure_non_empty_list(values: list, label: str) -> None:
@@ -87,6 +99,8 @@ def run_collection_pipeline(
 
     validate_positive_int(max_jobs, "max_jobs")
 
+    clear_file_exists(fetch_detail.FAIL_LOG)
+    clear_file_exists(retry_failed.RETRY_FAIL_LOG)
     if urls:
         list_paths = fetch_list.main(
             urls=urls,
@@ -104,8 +118,27 @@ def run_collection_pipeline(
         list_paths=list_paths,
         max_jobs=max_jobs,
     )
-
     ensure_non_empty_list(processed_urls, "processed_urls")
+
+    retry_result = retry_failed.retry_failed_rows()
+
+    if retry_result.target_count > 0:
+        logger.info(
+            "Retry was executed: target=%d success=%d failed=%d",
+            retry_result.target_count,
+            retry_result.success_count,
+            retry_result.failed_count,
+        )
+        if retry_result.failed_count > 0:
+            logger.warning(
+                "Some detail pages still failed after retry: %d",
+                retry_result.failed_count,
+            )
+
+    else:
+        logger.info("No retry needed")
+
+    ensure_has_detail_html(detail_dir)
 
     build_dataset.main(
         detail_dir=detail_dir,

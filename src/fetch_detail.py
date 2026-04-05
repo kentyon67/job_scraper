@@ -24,6 +24,7 @@ DEFAULT_MAX_JOBS = 50
 logger = logging.getLogger(__name__)
 
 
+
 def load_list_html(path: Path) -> str:
     logger.info("Loading list HTML from %s", path)
     return path.read_text(encoding="utf-8")
