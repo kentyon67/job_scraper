@@ -2,6 +2,9 @@ import logging
 import time
 from pathlib import Path
 
+from requests import Session
+
+from src.utils import  build_session
 import requests
 
 
@@ -24,6 +27,8 @@ DEFAULT_OUT_DIR = Path("data/raw")
 LIST_MAX_ATTEMPTS = 2
 LIST_RETRY_WAIT_SECONDS = 1
 
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +39,9 @@ def sanitize_filename(text: str) -> str:
     return sanitized
 
 
-def fetch_html(url: str) -> str:
+def fetch_html(url: str, session : requests.Session) -> str:
+
+
     for attempt in range(1, LIST_MAX_ATTEMPTS + 1):
         logger.info(
             "Fetching list page (attempt %d/%d): %s",
@@ -44,14 +51,14 @@ def fetch_html(url: str) -> str:
         )
 
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            resp = session.get(url, headers=HEADERS, timeout=TIMEOUT)
             resp.raise_for_status()
 
             html = resp.text
             logger.info("Fetched HTML: %s chars", len(html))
             return html
 
-        except requests.RequestException as e:
+        except requests.RequestException as  e:
             is_last_attempt = attempt == LIST_MAX_ATTEMPTS
 
             if is_last_attempt:
@@ -83,7 +90,8 @@ def fetch_and_save_list(
     url: str = DEFAULT_URL,
     out_path: Path = DEFAULT_OUT_PATH,
 ) -> Path:
-    html = fetch_html(url)
+    session: Session = build_session()
+    html = fetch_html(url, session)
     save_list_html(html, out_path)
     return out_path
 
