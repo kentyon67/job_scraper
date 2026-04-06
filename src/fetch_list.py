@@ -1,4 +1,5 @@
 import logging
+import time
 from pathlib import Path
 
 import requests
@@ -20,6 +21,9 @@ TIMEOUT = 20
 DEFAULT_OUT_PATH = Path("data/raw/list.html")
 DEFAULT_OUT_DIR = Path("data/raw")
 
+LIST_MAX_ATTEMPTS = 2
+LIST_RETRY_WAIT_SECONDS = 1
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,15 +35,43 @@ def sanitize_filename(text: str) -> str:
 
 
 def fetch_html(url: str) -> str:
-    logger.info("Fetching list page: %s", url)
+    for attempt in range(1, LIST_MAX_ATTEMPTS + 1):
+        logger.info(
+            "Fetching list page (attempt %d/%d): %s",
+            attempt,
+            LIST_MAX_ATTEMPTS,
+            url,
+        )
 
-    resp = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-    resp.raise_for_status()
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            resp.raise_for_status()
 
-    html = resp.text
-    logger.info("Fetched HTML: %s chars", len(html))
-    return html
+            html = resp.text
+            logger.info("Fetched HTML: %s chars", len(html))
+            return html
 
+        except requests.RequestException as e:
+            is_last_attempt = attempt == LIST_MAX_ATTEMPTS
+
+            if is_last_attempt:
+                logger.exception(
+                    "Failed to fetch list page after %d attempts: %s",
+                    LIST_MAX_ATTEMPTS,
+                    url,
+                )
+                raise
+
+            logger.warning(
+                "Fetch list failed on attempt %d/%d. Retrying in %d second(s): %s",
+                attempt,
+                LIST_MAX_ATTEMPTS,
+                LIST_RETRY_WAIT_SECONDS,
+                url,
+            )
+            time.sleep(LIST_RETRY_WAIT_SECONDS)
+
+    raise RuntimeError(f"Unexpected list fetch failure: {url}")
 
 def save_list_html(html: str, out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)

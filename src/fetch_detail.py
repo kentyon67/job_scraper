@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 from datetime import datetime
 import csv
 import logging
-
+import time
 import requests
 from bs4 import BeautifulSoup
 
@@ -20,7 +20,8 @@ DEFAULT_LIST_PATH = BASE_DIR / "data" / "raw" / "list.html"
 FAIL_LOG = LOG_DIR / "failures.csv"
 DEFAULT_BASE_URL = "https://job-boards.greenhouse.io"
 DEFAULT_MAX_JOBS = 50
-
+DETAIL_RETRY_WAIT_SECONDS = 1
+DETAIL_MAX_ATTEMPTS = 2
 logger = logging.getLogger(__name__)
 
 
@@ -95,26 +96,49 @@ def fetch_and_save_detail(
     session: requests.Session,
     index: int,
     url: str,
-) -> None:
+) -> bool:
     job_id = extract_job_id(url)
-    logger.info("[%d] job_id=%s fetching: %s", index, job_id, url)
 
-    try:
-        resp = session.get(url, timeout=TIMEOUT)
-        resp.raise_for_status()
+    for attempt in range(1, DETAIL_MAX_ATTEMPTS + 1):
+        logger.info(
+            "[%d] job_id=%s fetching (attempt %d/%d): %s",
+            index,
+            job_id,
+            attempt,
+            DETAIL_MAX_ATTEMPTS,
+            url,
+        )
 
-        save_detail(url, resp.text)
-        logger.info("[%d] job_id=%s saved successfully", index, job_id)
+        try:
+            resp = session.get(url, timeout=TIMEOUT)
+            resp.raise_for_status()
 
-    except requests.exceptions.RequestException as e:
-        status = getattr(getattr(e, "response", None), "status_code", None)
-        logger.error("[%d] Request failed for %s: %s", index, url, e)
-        log_failure(index, job_id, url, e, status)
+            save_detail(url, resp.text)
+            logger.info("[%d] job_id=%s saved successfully", index, job_id)
+            return True
 
-    except OSError as e:
-        logger.error("[%d] File save failed for %s: %s", index, url, e)
-        log_failure(index, job_id, url, e, None)
+        except requests.exceptions.RequestException as e:
+            status = getattr(getattr(e, "response", None), "status_code", None)
 
+            is_last_attempt = attempt == DETAIL_MAX_ATTEMPTS
+            if is_last_attempt:
+                logger.error("[%d] Request failed for %s: %s", index, url, e)
+                log_failure(index, job_id, url, e, status)
+                return False
+
+            logger.warning(
+                "[%d] Request failed for %s on attempt %d/%d. Retrying...",
+                index,
+                url,
+                attempt,
+                DETAIL_MAX_ATTEMPTS,
+            )
+            time.sleep(DETAIL_RETRY_WAIT_SECONDS)
+
+        except OSError as e:
+            logger.error("[%d] File save failed for %s: %s", index, url, e)
+            log_failure(index, job_id, url, e, None)
+            return False
 
 def fetch_details_from_urls(
     urls: list[str],
@@ -131,9 +155,23 @@ def fetch_details_from_urls(
     target_urls = urls[:max_jobs]
     logger.info("Processing %d detail URLs", len(target_urls))
 
-    for i, url in enumerate(target_urls, start=1):
-        fetch_and_save_detail(session, i, url)
+    success_count = 0
+    failed_count = 0
 
+    for i, url in enumerate(target_urls, start=1):
+        ok =fetch_and_save_detail(session, i, url)
+
+    if ok :
+        success_count = success_count + 1
+    else:
+        failed_count = failed_count + 1
+
+    logger.info(
+        "Detail fetch completed: target=%d success=%d failed=%d",
+        len(target_urls),
+        success_count,
+        failed_count,
+    )
     return target_urls
 
 

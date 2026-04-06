@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-from pip._internal.utils import urls
-
 from src import fetch_list, fetch_detail, build_dataset, retry_failed
 from src.ai import summarize, classify, score, compare
 from src.user_profile import UserProfile
@@ -23,10 +21,10 @@ DEFAULT_MAX_JOBS = 50
 
 logger = logging.getLogger(__name__)
 
-def clear_file_exists(path: Path) -> None:
-    if not path.exists():
-       path.unlink()
-       logger.info("Removed old file: %s", path)
+def clear_file_if_exists(path: Path) -> None:
+    if path.exists():
+        path.unlink()
+        logger.info("Removed old file: %s", path)
 
 def ensure_has_detail_html(detail_dir: Path) -> None:
     ensure_file_exists(detail_dir, "detail_dir")
@@ -99,8 +97,8 @@ def run_collection_pipeline(
 
     validate_positive_int(max_jobs, "max_jobs")
 
-    clear_file_exists(fetch_detail.FAIL_LOG)
-    clear_file_exists(retry_failed.RETRY_FAIL_LOG)
+    clear_file_if_exists(fetch_detail.FAIL_LOG)
+    clear_file_if_exists(retry_failed.RETRY_FAIL_LOG)
     if urls:
         list_paths = fetch_list.main(
             urls=urls,
