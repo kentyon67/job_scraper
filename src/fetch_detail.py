@@ -22,8 +22,15 @@ DEFAULT_BASE_URL = "https://job-boards.greenhouse.io"
 DEFAULT_MAX_JOBS = 50
 DETAIL_RETRY_WAIT_SECONDS = 1
 DETAIL_MAX_ATTEMPTS = 2
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
 logger = logging.getLogger(__name__)
 
+
+def should_retry_request(status_code: int | None) -> bool:
+    if status_code is None:
+        return True
+    return status_code in RETRYABLE_STATUS_CODES
 
 
 def load_list_html(path: Path) -> str:
@@ -121,7 +128,9 @@ def fetch_and_save_detail(
             status = getattr(getattr(e, "response", None), "status_code", None)
 
             is_last_attempt = attempt == DETAIL_MAX_ATTEMPTS
-            if is_last_attempt:
+            should_retry = should_retry_request(status)
+
+            if is_last_attempt or not should_retry :
                 logger.error("[%d] Request failed for %s: %s", index, url, e)
                 log_failure(index, job_id, url, e, status)
                 return False

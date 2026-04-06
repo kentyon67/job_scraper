@@ -27,9 +27,20 @@ DEFAULT_OUT_DIR = Path("data/raw")
 LIST_MAX_ATTEMPTS = 2
 LIST_RETRY_WAIT_SECONDS = 1
 
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+DETAIL_MAX_ATTEMPTS = 2
+DETAIL_RETRY_WAIT_SECONDS = 1
 
 
 logger = logging.getLogger(__name__)
+
+
+
+
+def should_retry_request(status_code: int | None) -> bool:
+    if status_code is None:
+        return True
+    return status_code in RETRYABLE_STATUS_CODES
 
 
 def sanitize_filename(text: str) -> str:
@@ -59,12 +70,14 @@ def fetch_html(url: str, session : requests.Session) -> str:
             return html
 
         except requests.RequestException as  e:
+            status = getattr((e, "status", None),"status_code", None)
             is_last_attempt = attempt == LIST_MAX_ATTEMPTS
+            should_retry = should_retry_request(status)
 
-            if is_last_attempt:
+            if is_last_attempt or not should_retry:
                 logger.exception(
-                    "Failed to fetch list page after %d attempts: %s",
-                    LIST_MAX_ATTEMPTS,
+                    "Failed to fetch list page (status=%s): %s",
+                    status,
                     url,
                 )
                 raise
