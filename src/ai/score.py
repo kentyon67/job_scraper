@@ -226,6 +226,47 @@ def build_score_reason(job_reasons: list[str], fit_reasons: list[str]) -> str:
     fit_reason_text = "、".join(fit_reasons) if fit_reasons else "明確な一致要素なし"
     return f"求人属性: {job_reason_text}。マッチ度: {fit_reason_text}。"
 
+def build_short_reason(
+    row: dict,
+    job_reasons: list[str],
+    fit_reasons: list[str],
+) -> str:
+    parts: list[str] = []
+
+    job_category = row.get("job_category", "")
+    location = row.get("location", "")
+    python_related = row.get("python_related", "").lower()
+    ai_related = row.get("ai_related", "").lower()
+
+    combined_text = " ".join([location," ".join(job_reasons)," ".join(fit_reasons),]).lower()
+
+    if job_category:
+        parts.append(f"{job_category}職")
+
+    if "ハイブリッド" in combined_text:
+        parts.append("ハイブリッド")
+    elif "リモート" in combined_text or "remote" in combined_text:
+        parts.append("リモート可")
+
+    if python_related == "yes":
+        parts.append("Python")
+    elif ai_related == "yes":
+        parts.append("AI関連")
+
+    if "global" in combined_text or "english" in combined_text:
+        parts.append("グローバル")
+
+    if "勤務地条件がやや不一致" in combined_text:
+        parts.append("勤務地やや不一致")
+
+    unique_parts = []
+    for p in parts:
+        if p not in unique_parts:
+            unique_parts.append(p)
+
+    return "・".join(unique_parts[:3]) if unique_parts else "特徴なし"
+
+
 
 def score_jobs(
     input_path: Path,
@@ -265,13 +306,14 @@ def score_jobs(
             fit_score, fit_reasons = calculate_fit_score(row, user_profile)
             total_score = job_score + fit_score
             score_reason = build_score_reason(job_reasons, fit_reasons)
+            short_reason = build_short_reason(row, job_reasons, fit_reasons)
 
             new_row = dict(row)
             new_row["job_score"] = job_score
             new_row["fit_score"] = fit_score
             new_row["total_score"] = total_score
             new_row["score_reason"] = score_reason
-
+            new_row["short_reason"] = short_reason
             scored_rows.append(new_row)
             logger.info("Completed row %d/%d", i, len(rows))
 

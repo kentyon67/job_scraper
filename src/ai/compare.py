@@ -1,16 +1,15 @@
 import csv
 import logging
 from pathlib import Path
-from src.user_profile import DEFAULT_USER_PROFILE, UserProfile
 
 DEFAULT_INPUT_PATH = Path("data/output/jobs_scored.csv")
 DEFAULT_OUTPUT_PATH = Path("data/output/jobs_compared.csv")
 
-VALID_SORT_COLUMNS = {"total_score","job_score","fit_score"}
+VALID_SORT_COLUMNS = {"total_score", "job_score", "fit_score"}
 
 logger = logging.getLogger(__name__)
 
-priority_columns = [
+LIST_COLUMNS = [
     "rank",
     "title",
     "total_score",
@@ -18,9 +17,8 @@ priority_columns = [
     "job_score",
     "location",
     "job_category",
-    "score_reason",
+    "short_reason",
 ]
-
 
 
 def parse_score(value: str) -> int:
@@ -32,6 +30,7 @@ def parse_score(value: str) -> int:
     except ValueError:
         logger.warning("Invalid score value: %s", value)
         return 0
+
 
 def validate_sort_by(sort_by: str) -> None:
     if sort_by not in VALID_SORT_COLUMNS:
@@ -55,8 +54,7 @@ def compare_jobs(
     validate_sort_by(sort_by)
 
     if not input_path.exists():
-        logger.error("Input file not found: %s", input_path)
-        return
+        raise FileNotFoundError(f"Input file not found: {input_path}")
 
     with input_path.open("r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
@@ -65,42 +63,41 @@ def compare_jobs(
     logger.info("Loaded %d rows from CSV", len(rows))
 
     if not rows:
-        logger.warning("No rows found in input CSV")
-        return
+        raise ValueError("No rows found in input CSV")
 
     sorted_rows = sorted(
         rows,
         key=lambda row: parse_score(row.get(sort_by, "0")),
-        reverse= True ,
+        reverse=True,
     )
 
-    if top is not None :
-        soreted_rows = sorted_rows[:top]
+    if top is not None:
+        sorted_rows = sorted_rows[:top]
         logger.info("Trimmed rows to top %d", len(sorted_rows))
 
-    compared_rows = []
+    compared_rows: list[dict[str, str | int]] = []
+
     for rank, row in enumerate(sorted_rows, start=1):
-        new_row = row.copy()
-        new_row["rank"] = rank
-        compared_rows.append(new_row)
-
-    existing_priority_columns = [
-        col for col in priority_columns if col in compared_rows[0]
-    ]
-
-    remaining_columns = [
-        col for col in compared_rows[0].keys()
-        if col not in existing_priority_columns
-    ]
-
-    fieldnames = existing_priority_columns + remaining_columns
+        list_row: dict[str, str | int] = {
+            "rank": rank,
+            "title": row.get("title", ""),
+            "total_score": row.get("total_score", ""),
+            "fit_score": row.get("fit_score", ""),
+            "job_score": row.get("job_score", ""),
+            "location": row.get("location", ""),
+            "job_category": row.get("job_category", ""),
+            "short_reason": row.get("short_reason", ""),
+        }
+        compared_rows.append(list_row)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with output_path.open("w", encoding="utf-8-sig", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=LIST_COLUMNS)
         writer.writeheader()
         writer.writerows(compared_rows)
+
+    logger.info("Saved compared CSV: %s", output_path)
 
 
 def main(
@@ -120,3 +117,7 @@ def main(
         sort_by=sort_by,
         top=top,
     )
+
+
+if __name__ == "__main__":
+    main()
