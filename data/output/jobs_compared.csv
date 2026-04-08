@@ -1,6 +1,6 @@
-﻿rank,title,total_score,fit_score,job_score,location,job_category,short_reason
-1,Site Reliability Engineer (Bilingual SRE),63,0,63,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・Python
-2,Data Engineer (DaaS),47,0,47,Hybrid,Data,Data職・ハイブリッド・Python
-3,Frontend Engineer,32,0,32,Hybrid,Frontend,Frontend職・ハイブリッド・勤務地やや不一致
-4,エンタープライズ営業担当,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致
-5,IT統制担当/IT Controller,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致
+﻿rank,title,total_score,fit_score,job_score,location,job_category,short_reason,url
+1,Site Reliability Engineer (Bilingual SRE),63,0,63,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4089300004
+2,Data Engineer (DaaS),47,0,47,Hybrid,Data,Data職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4089265004
+3,Frontend Engineer,32,0,32,Hybrid,Frontend,Frontend職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089251004
+4,エンタープライズ営業担当,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089245004
+5,IT統制担当/IT Controller,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089304004

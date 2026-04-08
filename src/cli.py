@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
 from src.user_profile import build_user_profile_from_args
-from src.ai import summarize, classify, score, compare, pipeline
+from src.ai import summarize, classify, score, compare, export_detail,  pipeline
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -142,6 +142,35 @@ def main() -> None:
         help="上位何件を出力するか",
     )
 
+    export_parser = subparsers.add_parser(
+        "export",
+        help="スコア済みCSVから詳細CSVを作成する",
+
+    )
+
+    export_parser.add_argument(
+        "--input",
+        default="data/output/jobs_scored.csv",
+        help="入力CSVのパス",
+    )
+    export_parser.add_argument(
+        "--output",
+        default="data/output/jobs_detail_view.csv",
+        help="出力CSVのパス",
+    )
+    export_parser.add_argument(
+        "--sort-by",
+        default="total_score",
+        choices=["total_score", "job_score", "fit_score"],
+        help="並び替え基準",
+    )
+    export_parser.add_argument(
+        "--top",
+        type=int,
+        default=None,
+        help="上位何件を出力するか",
+    )
+
     pipeline_parser = subparsers.add_parser(
         "pipeline",
         help="URL取得から比較まで一括実行する",
@@ -207,6 +236,11 @@ def main() -> None:
         help="compare出力CSVのパス",
     )
 
+    pipeline_parser.add_argument(
+        "--detail-view-output",
+        default="data/output/jobs_detail_view.csv",
+        help="detail_view出力CSVのパス",
+    )
     pipeline_parser.add_argument(
         "--max-jobs",
         type=int,
@@ -332,6 +366,13 @@ def main() -> None:
             top=args.top,
         )
 
+    elif args.command == "export":
+        export_detail.main(
+            input_path=Path(args.input),
+            output_path=Path(args.output),
+            sort_by=args.sort_by,
+            top=args.top,
+        )
 
     elif args.command == "pipeline":
 
@@ -350,6 +391,7 @@ def main() -> None:
             classified_path=Path(args.classified_output),
             scored_path=Path(args.scored_output),
             compared_path=Path(args.compared_output),
+            detail_view_path=Path(args.detail_view_output),
             max_jobs=args.max_jobs,
             limit=args.limit,
             sort_by=args.sort_by,

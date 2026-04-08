@@ -3,22 +3,27 @@ import logging
 from pathlib import Path
 
 DEFAULT_INPUT_PATH = Path("data/output/jobs_scored.csv")
-DEFAULT_OUTPUT_PATH = Path("data/output/jobs_compared.csv")
+DEFAULT_OUTPUT_PATH = Path("data/output/jobs_detail_view.csv")
 
 VALID_SORT_COLUMNS = {"total_score", "job_score", "fit_score"}
 
 logger = logging.getLogger(__name__)
 
-LIST_COLUMNS = [
-    "rank",
+DETAIL_COLUMNS = [
     "title",
+    "url",
+    "location",
+    "job_category",
     "total_score",
     "fit_score",
     "job_score",
-    "location",
-    "job_category",
-    "short_reason",
-    "url",  # UIでは隠してもOK。内部キー用
+    "score_reason",
+    "description",
+    "qualifications",
+    "working_condition",
+    "ai_summary",
+    "python_related",
+    "ai_related",
 ]
 
 
@@ -40,13 +45,13 @@ def validate_sort_by(sort_by: str) -> None:
         )
 
 
-def compare_jobs(
+def export_detail_view(
     input_path: Path,
     output_path: Path,
     sort_by: str = "total_score",
     top: int | None = None,
 ) -> None:
-    logger.info("Start comparing jobs")
+    logger.info("Start exporting detail view")
     logger.info("Input path: %s", input_path)
     logger.info("Output path: %s", output_path)
     logger.info("Sort by: %s", sort_by)
@@ -74,32 +79,37 @@ def compare_jobs(
 
     if top is not None:
         sorted_rows = sorted_rows[:top]
-        logger.info("Trimmed rows to top %d", len(sorted_rows))
+        logger.info("Trimmed detail rows to top %d", len(sorted_rows))
 
-    compared_rows: list[dict[str, str | int]] = []
+    detail_rows: list[dict[str, str]] = []
 
-    for rank, row in enumerate(sorted_rows, start=1):
-        list_row: dict[str, str | int] = {
-            "rank": rank,
+    for row in sorted_rows:
+        detail_row = {
             "title": row.get("title", ""),
+            "url": row.get("url", ""),
+            "location": row.get("location", ""),
+            "job_category": row.get("job_category", ""),
             "total_score": row.get("total_score", ""),
             "fit_score": row.get("fit_score", ""),
             "job_score": row.get("job_score", ""),
-            "location": row.get("location", ""),
-            "job_category": row.get("job_category", ""),
-            "short_reason": row.get("short_reason", ""),
-            "url": row.get("url", ""),
+            "score_reason": row.get("score_reason", ""),
+            "description": row.get("description", ""),
+            "qualifications": row.get("qualifications", ""),
+            "working_condition": row.get("working_condition", ""),
+            "ai_summary": row.get("ai_summary", ""),
+            "python_related": row.get("python_related", ""),
+            "ai_related": row.get("ai_related", ""),
         }
-        compared_rows.append(list_row)
+        detail_rows.append(detail_row)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with output_path.open("w", encoding="utf-8-sig", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=LIST_COLUMNS)
+        writer = csv.DictWriter(f, fieldnames=DETAIL_COLUMNS)
         writer.writeheader()
-        writer.writerows(compared_rows)
+        writer.writerows(detail_rows)
 
-    logger.info("Saved compared CSV: %s", output_path)
+    logger.info("Saved detail view CSV: %s", output_path)
 
 
 def main(
@@ -113,7 +123,7 @@ def main(
         format="%(asctime)s %(levelname)s %(name)s - %(message)s",
     )
 
-    compare_jobs(
+    export_detail_view(
         input_path=input_path,
         output_path=output_path,
         sort_by=sort_by,

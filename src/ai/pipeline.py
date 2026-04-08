@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from src import fetch_list, fetch_detail, build_dataset, retry_failed
-from src.ai import summarize, classify, score, compare
+from src.ai import summarize, classify, score, compare, export_detail
 from src.user_profile import UserProfile
 
 
@@ -10,12 +10,12 @@ DEFAULT_URL = "https://job-boards.greenhouse.io/paypay"
 
 DEFAULT_LIST_OUT_PATH = Path("data/raw/list.html")
 DEFAULT_DETAIL_DIR = Path("data/raw")
-
 DEFAULT_INPUT_CSV_PATH = Path("data/output/jobs.csv")
 DEFAULT_ENRICHED_PATH = Path("data/output/jobs_enriched.csv")
 DEFAULT_CLASSIFIED_PATH = Path("data/output/jobs_classified.csv")
 DEFAULT_SCORED_PATH = Path("data/output/jobs_scored.csv")
 DEFAULT_COMPARED_PATH = Path("data/output/jobs_compared.csv")
+DEFAULT_DETAIL_VIEW_PATH = Path("data/output/jobs_detail_view.csv")
 
 DEFAULT_MAX_JOBS = 50
 
@@ -156,6 +156,7 @@ def run_analysis_pipeline(
     classified_path: Path = DEFAULT_CLASSIFIED_PATH,
     scored_path: Path = DEFAULT_SCORED_PATH,
     compared_path: Path = DEFAULT_COMPARED_PATH,
+    detail_view_path: Path = DEFAULT_DETAIL_VIEW_PATH,
     limit: int | None = None,
     sort_by: str = "total_score",
     top: int | None = None,
@@ -166,6 +167,7 @@ def run_analysis_pipeline(
     logger.info("Classified path: %s", classified_path)
     logger.info("Scored path: %s", scored_path)
     logger.info("Compared path: %s", compared_path)
+    logger.info("Detail view path: %s", detail_view_path)
     logger.info("Limit: %s", limit)
     logger.info("Sort by: %s", sort_by)
     logger.info("Top: %s", top)
@@ -209,6 +211,15 @@ def run_analysis_pipeline(
 
     ensure_non_empty_file(compared_path, "compared_csv")
 
+    export_detail.main(
+        input_path=scored_path,
+        output_path=detail_view_path,
+        sort_by=sort_by,
+        top=top
+    )
+
+    ensure_non_empty_file(detail_view_path, "detail_view")
+
     logger.info("Analysis pipeline completed")
 
 
@@ -224,6 +235,7 @@ def run_full_pipeline(
     classified_path: Path = DEFAULT_CLASSIFIED_PATH,
     scored_path: Path = DEFAULT_SCORED_PATH,
     compared_path: Path = DEFAULT_COMPARED_PATH,
+    detail_view_path: Path = DEFAULT_DETAIL_VIEW_PATH,
     max_jobs: int = DEFAULT_MAX_JOBS,
     limit: int | None = None,
     sort_by: str = "total_score",
@@ -247,6 +259,7 @@ def run_full_pipeline(
         classified_path= classified_path ,
         scored_path= scored_path ,
         compared_path= compared_path ,
+        detail_view_path=detail_view_path,
         limit= limit ,
         sort_by= sort_by,
         top= top ,
@@ -267,6 +280,7 @@ def main(
     classified_path: Path = DEFAULT_CLASSIFIED_PATH,
     scored_path: Path = DEFAULT_SCORED_PATH,
     compared_path: Path = DEFAULT_COMPARED_PATH,
+    detail_view_path: Path = DEFAULT_DETAIL_VIEW_PATH,
     max_jobs: int = DEFAULT_MAX_JOBS,
     limit: int | None = None,
     sort_by: str = "total_score",
@@ -295,6 +309,7 @@ def main(
                 classified_path=classified_path,
                 scored_path=scored_path,
                 compared_path=compared_path,
+                detail_view_path=detail_view_path,
                 limit=limit,
                 sort_by=sort_by,
                 top=top,
@@ -313,6 +328,7 @@ def main(
                 classified_path=classified_path,
                 scored_path=scored_path,
                 compared_path=compared_path,
+                detail_view_path=detail_view_path,
                 max_jobs=max_jobs,
                 limit=limit,
                 sort_by=sort_by,
