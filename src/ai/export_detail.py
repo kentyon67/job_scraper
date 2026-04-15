@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 DETAIL_COLUMNS = [
     "title",
+    "title_ja",
     "url",
     "location",
     "job_category",
@@ -20,8 +21,11 @@ DETAIL_COLUMNS = [
     "ai_summary",
     "score_reason",
     "description",
+    "description_ja",
     "qualifications",
+    "qualifications_ja",
     "working_condition",
+    "working_condition_ja",
     "python_related",
     "ai_related",
 ]
@@ -86,6 +90,7 @@ def export_detail_view(
     for row in sorted_rows:
         detail_row = {
             "title": row.get("title", ""),
+            "title_ja": row.get("title_ja", ""),
             "url": row.get("url", ""),
             "location": row.get("location", ""),
             "job_category": row.get("job_category", ""),
@@ -95,11 +100,16 @@ def export_detail_view(
             "ai_summary": row.get("ai_summary", ""),
             "score_reason": row.get("score_reason", ""),
             "description": row.get("description", ""),
+            "description_ja": row.get("description_ja", ""),
             "qualifications": row.get("qualifications", ""),
+            "qualifications_ja": row.get("qualifications_ja", ""),
             "working_condition": row.get("working_condition", ""),
+            "working_condition_ja": row.get("working_condition_ja", ""),
             "python_related": row.get("python_related", ""),
             "ai_related": row.get("ai_related", ""),
         }
+
+        detail_rows.append(detail_row)
         detail_rows.append(detail_row)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

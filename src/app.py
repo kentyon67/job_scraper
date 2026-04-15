@@ -3,12 +3,10 @@ import streamlit as st
 
 
 LIST_PATH = "data/output/jobs_compared.csv"
-DETAIL_PATH = "data/output/jobs_detail_view.csv"
 
 
 def load_list_data() -> pd.DataFrame:
-    df_list = pd.read_csv(LIST_PATH).fillna("")
-    return df_list
+    return pd.read_csv(LIST_PATH).fillna("")
 
 
 def inject_css() -> None:
@@ -16,7 +14,7 @@ def inject_css() -> None:
         """
         <style>
         .main {
-            background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+            background: #f8fafc;
         }
 
         .block-container {
@@ -26,49 +24,81 @@ def inject_css() -> None:
         }
 
         .hero-card {
-            background: linear-gradient(135deg, #1e293b 0%, #111827 100%);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 24px;
-            padding: 28px 28px 20px 28px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            padding: 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
         }
 
         .hero-title {
-            font-size: 2rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 8px;
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.03em;
         }
 
         .hero-subtitle {
-            font-size: 1rem;
-            color: #cbd5e1;
-            line-height: 1.7;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: white;
-            margin-top: 8px;
-            margin-bottom: 8px;
+            font-size: 1.12rem;
+            color: #e2e8f0;
+            line-height: 1.9;
+            margin-bottom: 14px;
+            max-width: 760px;
         }
 
         .metric-chip-wrap {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin: 12px 0 6px 0;
+            margin-top: 10px;
         }
 
         .metric-chip {
-            background: rgba(255,255,255,0.08);
-            color: #e5e7eb;
+            background: rgba(255,255,255,0.10);
+            color: #f8fafc;
+            padding: 8px 13px;
+            border-radius: 999px;
+            font-size: 0.92rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            font-weight: 700;
+        }
+
+        .profile-summary-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 26px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .profile-summary-header {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 14px;
+        }
+
+        .profile-item {
+            display: inline-block;
+            background: #eef2ff;
+            color: #1e3a8a;
             padding: 8px 12px;
             border-radius: 999px;
+            margin-right: 8px;
+            margin-bottom: 8px;
             font-size: 0.9rem;
-            border: 1px solid rgba(255,255,255,0.08);
+            font-weight: 700;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin-top: 8px;
+            margin-bottom: 12px;
         }
 
         .rank-pill {
@@ -76,8 +106,8 @@ def inject_css() -> None:
             background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
             color: #111827;
             font-weight: 900;
-            font-size: 0.95rem;
-            padding: 7px 12px;
+            font-size: 1rem;
+            padding: 8px 14px;
             border-radius: 999px;
             margin-right: 10px;
             margin-bottom: 10px;
@@ -85,17 +115,17 @@ def inject_css() -> None:
 
         .badge {
             display: inline-block;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 700;
+            font-size: 0.82rem;
+            font-weight: 800;
             margin-right: 8px;
             margin-bottom: 8px;
         }
 
         .badge-category {
             background: #2563eb;
-            color: white;
+            color: #ffffff;
         }
 
         .badge-location {
@@ -104,24 +134,33 @@ def inject_css() -> None:
         }
 
         .card-title {
-            font-size: 1.08rem;
-            font-weight: 800;
-            color: white;
+            font-size: 1.12rem;
+            font-weight: 900;
+            color: #111827;
             margin-top: 4px;
             margin-bottom: 10px;
             line-height: 1.5;
         }
 
         .muted {
-            color: #94a3b8;
-            font-size: 0.92rem;
+            color: #475569;
+            font-size: 0.94rem;
         }
 
         div[data-testid="stMetric"] {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             padding: 10px 12px;
             border-radius: 16px;
+        }
+
+        div[data-testid="stMetricLabel"] {
+            color: #475569 !important;
+        }
+
+        div[data-testid="stMetricValue"] {
+            color: #0f172a !important;
+            font-weight: 900 !important;
         }
         </style>
         """,
@@ -153,9 +192,25 @@ def normalize_location(value: str) -> str:
     return mapping.get(str(value), str(value))
 
 
-def render_hero(df_list: pd.DataFrame) -> None:
+def init_profile_state() -> None:
+    defaults = {
+        "preferred_languages": ["Python"],
+        "preferred_domains": ["Backend", "Data"],
+        "prefer_global": True,
+        "experience_level": "Beginner",
+        "priority_mode": "Growth",
+        "preferred_locations": ["Tokyo"],
+        "allow_remote": True,
+    }
+
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
+def render_hero() -> None:
     st.markdown(
-        f"""
+        """
         <div class="hero-card">
             <div class="hero-title">JobFit</div>
             <div class="hero-subtitle">
@@ -163,7 +218,6 @@ def render_hero(df_list: pd.DataFrame) -> None:
                 カード一覧で比較して、気になる求人だけ詳しく確認できます。
             </div>
             <div class="metric-chip-wrap">
-                <div class="metric-chip">掲載件数: {len(df_list)}件</div>
                 <div class="metric-chip">AI要約つき</div>
                 <div class="metric-chip">一覧 + 詳細ページ対応</div>
             </div>
@@ -172,6 +226,61 @@ def render_hero(df_list: pd.DataFrame) -> None:
         unsafe_allow_html=True,
     )
 
+
+def render_profile_summary() -> None:
+    preferred_languages = st.session_state.get("preferred_languages", [])
+    preferred_domains = st.session_state.get("preferred_domains", [])
+    prefer_global = st.session_state.get("prefer_global", False)
+    experience_level = st.session_state.get("experience_level", "")
+    priority_mode = st.session_state.get("priority_mode", "")
+    preferred_locations = st.session_state.get("preferred_locations", [])
+    allow_remote = st.session_state.get("allow_remote", False)
+
+    items = []
+
+    if preferred_languages:
+        items.append(f"言語: {', '.join(preferred_languages)}")
+    if preferred_domains:
+        items.append(f"領域: {', '.join(normalize_category(d) for d in preferred_domains)}")
+    if experience_level:
+        items.append(f"経験: {experience_level}")
+    if priority_mode:
+        items.append(f"重視: {priority_mode}")
+    if preferred_locations:
+        items.append(f"勤務地: {', '.join(preferred_locations)}")
+    if prefer_global:
+        items.append("グローバル志向")
+    if allow_remote:
+        items.append("リモート許容")
+
+    # ボタンを左に置く
+    nav_col1, nav_col2 = st.columns([1.4, 6], vertical_alignment="center")
+
+    with nav_col1:
+        if st.button("👤\nプロフィール", key="profile_summary_button", use_container_width=True):
+            try:
+                st.switch_page("pages/profile_settings.py")
+            except Exception:
+                st.error("プロフィール設定ページへ移動できませんでした。")
+
+    with nav_col2:
+        st.markdown(
+            '<div class="section-title">現在のプロフィール設定</div>',
+            unsafe_allow_html=True,
+        )
+
+    items_html = "".join(
+        [f'<span class="profile-item">{item}</span>' for item in items]
+    )
+
+    st.markdown(
+        f"""
+        <div class="profile-summary-card">
+            {items_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def render_filters(df_list: pd.DataFrame) -> pd.DataFrame:
     st.sidebar.header("絞り込み")
@@ -225,19 +334,19 @@ def render_job_card(row: pd.Series) -> bool:
                 <span class="rank-pill">#{row.get('rank', '')}</span>
                 <span class="badge badge-category">{normalize_category(row.get('job_category', ''))}</span>
                 <span class="badge badge-location">{normalize_location(row.get('location', ''))}</span>
-                <div class="card-title">{row.get('title', '')}</div>
+                <div class="card-title">{row.get('title_ja', '') or row.get('title', '')}</div>
                 <div class="muted">注目ポイント: {row.get('short_reason', '')}</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
+        c1, c2, c3 = st.columns(3)
+        with c1:
             st.metric("総合", total_score)
-        with col2:
+        with c2:
             st.metric("マッチ度", fit_score)
-        with col3:
+        with c3:
             st.metric("求人価値", job_score)
 
         st.progress(total_score / 100)
@@ -257,22 +366,23 @@ def main() -> None:
     )
 
     inject_css()
+    init_profile_state()
 
     try:
         df_list = load_list_data()
     except FileNotFoundError:
         st.error("一覧データが見つかりません。先にパイプラインを実行してください。")
-        st.info("例: python -m src.cli pipeline --mode full ...")
         return
     except Exception:
-        st.error("一覧データの読み込みに失敗しました。ファイル形式やパスを確認してください。")
+        st.error("一覧データの読み込みに失敗しました。")
         return
 
     if df_list.empty:
         st.warning("表示できる求人データがまだありません。")
         return
 
-    render_hero(df_list)
+    render_hero()
+    render_profile_summary()
 
     filtered = render_filters(df_list)
 
@@ -291,7 +401,10 @@ def main() -> None:
             clicked = render_job_card(row)
             if clicked:
                 st.session_state.selected_url = row.get("url", "")
-                st.switch_page("pages/1_求人詳細.py")
+                try:
+                    st.switch_page("pages/job_detail.py")
+                except Exception:
+                    st.error("詳細ページへ移動できませんでした。")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,55 @@
 ﻿rank,title,total_score,fit_score,job_score,location,job_category,short_reason,url
-1,Site Reliability Engineer (Bilingual SRE),63,0,63,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4089300004
-2,Data Engineer (DaaS),47,0,47,Hybrid,Data,Data職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4089265004
-3,Frontend Engineer,32,0,32,Hybrid,Frontend,Frontend職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089251004
-4,エンタープライズ営業担当,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089245004
-5,IT統制担当/IT Controller,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089304004
+1,Backend Engineer,80,0,80,Hybrid,Backend,Backend職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/5683668004
+2,Principal Software Engineer,65,0,65,Hybrid,Backend,Backend職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4888665004
+3,Site Reliability Engineer (Bilingual SRE),63,0,63,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4089300004
+4,Cloud Platform Engineer,63,0,63,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/5471535004
+5,Senior Data Science Engineer / Senior Machine Learning Engineer - Data Insights,57,0,57,Hybrid,Data,Data職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4918512004
+6,Product PMO,55,0,55,Hybrid,Product,Product職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5779588004
+7,シニア機械学習エンジニア（金融事業領域）,50,0,50,Hybrid,AI/ML,AI/ML職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/5149320004
+8,生成AI×データ分析推進リード（営業戦略）,50,0,50,Hybrid,AI/ML,AI/ML職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5741219004
+9,Data Engineer (DaaS),47,0,47,Hybrid,Data,Data職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4089265004
+10,データ戦略推進企画担当,47,0,47,Hybrid,Data,Data職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5698854004
+11,金融事業企画・データ分析担当（決済・クレジット領域）,47,0,47,Hybrid,Data,Data職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5729739004
+12,データガバナンス推進,47,0,47,Hybrid,Data,Data職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5818516004
+13,Automation QA Engineer,45,0,45,Hybrid,Other,Other職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/4090172004
+14,Product Designer / プロダクトデザイナー (UX/UI),45,0,45,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4182995004
+15,Senior Product Manager,45,0,45,Hybrid,Product,Product職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5817540004
+16,Cloud Platform Engineer (DB Specialist),43,0,43,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/4919371004
+17,Cloud Platform Engineer (Kafka Specialist),43,0,43,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/5570222004
+18,Product Security Engineer (Infrastructure),43,0,43,Hybrid,Security,Security職・ハイブリッド・Python,https://job-boards.greenhouse.io/paypay/jobs/5700931004
+19,システム基盤構築・自動化推進担当（AI活用推進）,43,0,43,Hybrid,Infra/SRE,Infra/SRE職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5704642004
+20,SMB向け加盟店サービスのグロース・AI推進リード,35,0,35,Hybrid,Product,Product職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5681483004
+21,Frontend Engineer,32,0,32,Hybrid,Frontend,Frontend職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089251004
+22,営業支援担当（数値分析・運用推進）,30,0,30,Hybrid,Other,Other職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5504319004
+23,Backend Engineer / バックエンドエンジニア (New Bank Project),30,0,30,Hybrid,Backend,Backend職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5587090004
+24,CSシステム企画（業務変革推進担当/ボイス・テキスト担当）,30,0,30,Hybrid,Other,Other職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5683465004
+25,業務変革・プロジェクト推進担当（AI活用推進）,30,0,30,Hybrid,Other,Other職・ハイブリッド・AI関連,https://job-boards.greenhouse.io/paypay/jobs/5704640004
+26,CSIRTエンジニア,28,0,28,Hybrid,Security,Security職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5193265004
+27,セキュリティモニタリング,28,0,28,Hybrid,Security,Security職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5214187004
+28,セキュリティマネジメント（セキュリティ推進）,28,0,28,Hybrid,Security,Security職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5818643004
+29,決済ソリューション企画・推進リード,20,0,20,Hybrid,Product,Product職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5681480004
+30,新規事業開発・サービス企画 / リーダー候補（決済・資金移動サービス）,20,0,20,Hybrid,Product,Product職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5681486004
+31,新規事業開発・サービス企画 / リーダー候補（メーカー向け販促サービス）,20,0,20,Hybrid,Product,Product職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5681489004
+32,Product Manager / プロダクトマネージャー (New Bank Project),20,0,20,Hybrid,Product,Product職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5733829004
+33,マーケティング推進（プロダクトマーケティング/CRM施策推進）,20,0,20,Hybrid,Product,Product職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5782672004
+34,エンタープライズ営業担当,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089245004
+35,IT統制担当/IT Controller,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4089304004
+36,ポイントソリューション営業担当,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4726951004
+37,パートナー営業担当,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5477375004
+38,個店・SMB営業支援担当（販売戦略・企画推進）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5504316004
+39,金融事業開発担当（銀行領域）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5530875004
+40,新規事業企画・戦略／リーダー候補（チャージ関連業務・金融機関連携）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5636632004
+41,金融事業開発・新規事業企画（保険）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5643353004
+42,System PMO,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5661282004
+43,マーケティング推進担当（Fintech事業）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5674900004
+44,グローバルアライアンス・事業推進,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5675108004
+45,営業企画（戦略立案/企画推進担当）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5677616004
+46,戦略推進（マーケティングオペレーションスペシャリスト）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5677623004
+47,CS業務企画（業務変革推進担当）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5681496004
+48,事業戦略・事業企画 / リーダー候補,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5686546004
+49,新規事業開発・サービス企画 / 部長候補,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5686555004
+50,マーケティング戦略推進,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5718915004
+51,営業支援担当（営業管理・統制推進）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5725803004
+52,資産運用事業戦略企画（リーダー候補）,15,0,15,Hybrid,Other,Other職・ハイブリッド・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5765333004
+53,,5,0,5,,Other,Other職・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/4643779004
+54,,5,0,5,,Other,Other職・勤務地やや不一致,https://job-boards.greenhouse.io/paypay/jobs/5501932004

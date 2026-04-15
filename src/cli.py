@@ -1,8 +1,12 @@
 import argparse
 from pathlib import Path
+
+from pandas import UInt16Dtype
+
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
 from src.user_profile import build_user_profile_from_args
-from src.ai import summarize, classify, score, compare, export_detail,  pipeline
+from src.ai import summarize, classify, score, compare, export_detail,  pipeline, translate
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -70,6 +74,30 @@ def main() -> None:
     )
 
 
+
+    translate_purser = subparsers.add_parser(
+            "translate",
+        help="UI用に英文の詳細を翻訳",
+    )
+
+    translate_purser.add_argument(
+        "--limit",
+        type=int,
+        default=None
+    )
+
+    translate_purser.add_argument(
+        "--input",
+        default="data/output/jobs_enriched.csv"
+    )
+
+    translate_purser.add_argument(
+        "--output",
+        default="data/output/jobs_translated.csv"
+    )
+
+
+
     classify_parser = subparsers.add_parser(
         "classify",
         help="AI分類つきのCSVを作成する",
@@ -82,7 +110,7 @@ def main() -> None:
     )
     classify_parser.add_argument(
         "--input",
-        default="data/output/jobs_enriched.csv",
+        default="data/output/jobs_translated.csv",
         help="入力CSVのパス",
     )
     classify_parser.add_argument(
@@ -213,6 +241,12 @@ def main() -> None:
     )
 
     pipeline_parser.add_argument(
+        "--translated-output",
+        default="data/output/translated.csv",
+        help="UIで出力するための日本語訳CSVパス",
+    )
+
+    pipeline_parser.add_argument(
         "--enriched-output",
         default="data/output/jobs_enriched.csv",
         help="summarize出力CSVのパス",
@@ -339,7 +373,14 @@ def main() -> None:
         input_path = Path(args.input),
         output_path = Path(args.output),
         limit=args.limit,
-    )
+        )
+
+    elif args.command == "summarize":
+        summarize.main(
+        input_path = Path(args.input),
+        output_path = Path(args.output),
+        limit=args.limit,
+        )
 
     elif args.command == "classify":
         classify.main(
@@ -388,6 +429,7 @@ def main() -> None:
             detail_dir=Path(args.detail_dir),
             jobs_csv_path=Path(args.jobs_output),
             enriched_path=Path(args.enriched_output),
+            translate_csv_path=Path(args.translated_output),
             classified_path=Path(args.classified_output),
             scored_path=Path(args.scored_output),
             compared_path=Path(args.compared_output),

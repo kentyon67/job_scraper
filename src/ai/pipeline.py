@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from src import fetch_list, fetch_detail, build_dataset, retry_failed
-from src.ai import summarize, classify, score, compare, export_detail
+from src.ai import summarize, classify, score, compare, export_detail, translate
 from src.user_profile import UserProfile
 
 
@@ -16,7 +16,7 @@ DEFAULT_CLASSIFIED_PATH = Path("data/output/jobs_classified.csv")
 DEFAULT_SCORED_PATH = Path("data/output/jobs_scored.csv")
 DEFAULT_COMPARED_PATH = Path("data/output/jobs_compared.csv")
 DEFAULT_DETAIL_VIEW_PATH = Path("data/output/jobs_detail_view.csv")
-
+DEFAULT_TRANSLATED_PATH = Path("data/output/jobs_translated.csv")
 DEFAULT_MAX_JOBS = 50
 
 logger = logging.getLogger(__name__)
@@ -157,6 +157,7 @@ def run_analysis_pipeline(
     scored_path: Path = DEFAULT_SCORED_PATH,
     compared_path: Path = DEFAULT_COMPARED_PATH,
     detail_view_path: Path = DEFAULT_DETAIL_VIEW_PATH,
+    translated_path: Path = DEFAULT_TRANSLATED_PATH,
     limit: int | None = None,
     sort_by: str = "total_score",
     top: int | None = None,
@@ -185,8 +186,16 @@ def run_analysis_pipeline(
 
     ensure_non_empty_file(enriched_path, "enriched_csv")
 
-    classify.main(
+    translate.main(
         input_path=enriched_path,
+        output_path=translated_path,
+        limit=limit,
+    )
+
+    ensure_non_empty_file(translated_path, "translated_csv")
+
+    classify.main(
+        input_path=translated_path,
         output_path=classified_path,
         limit=limit,
     )
@@ -232,6 +241,7 @@ def run_full_pipeline(
     detail_dir: Path = DEFAULT_DETAIL_DIR,
     jobs_csv_path: Path = DEFAULT_INPUT_CSV_PATH,
     enriched_path: Path = DEFAULT_ENRICHED_PATH,
+    translated_path: Path = DEFAULT_TRANSLATED_PATH,
     classified_path: Path = DEFAULT_CLASSIFIED_PATH,
     scored_path: Path = DEFAULT_SCORED_PATH,
     compared_path: Path = DEFAULT_COMPARED_PATH,
@@ -256,6 +266,7 @@ def run_full_pipeline(
         user_profile= user_profile ,
         input_path= jobs_csv_path ,
         enriched_path= enriched_path ,
+        translated_path= translated_path ,
         classified_path= classified_path ,
         scored_path= scored_path ,
         compared_path= compared_path ,
@@ -281,6 +292,7 @@ def main(
     scored_path: Path = DEFAULT_SCORED_PATH,
     compared_path: Path = DEFAULT_COMPARED_PATH,
     detail_view_path: Path = DEFAULT_DETAIL_VIEW_PATH,
+    translate_csv_path: Path = DEFAULT_TRANSLATED_PATH,
     max_jobs: int = DEFAULT_MAX_JOBS,
     limit: int | None = None,
     sort_by: str = "total_score",
@@ -306,6 +318,7 @@ def main(
                 user_profile=user_profile,
                 input_path=jobs_csv_path,
                 enriched_path=enriched_path,
+                translated_path=translate_csv_path,
                 classified_path=classified_path,
                 scored_path=scored_path,
                 compared_path=compared_path,
@@ -325,6 +338,7 @@ def main(
                 detail_dir=detail_dir,
                 jobs_csv_path=jobs_csv_path,
                 enriched_path=enriched_path,
+                translated_path=translate_csv_path,
                 classified_path=classified_path,
                 scored_path=scored_path,
                 compared_path=compared_path,
@@ -341,3 +355,4 @@ def main(
     except Exception as e:
         logger.exception("Pipeline failed: %s", e)
         raise
+
