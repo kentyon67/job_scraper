@@ -2,7 +2,8 @@ import logging
 from pathlib import Path
 
 from src import fetch_list, fetch_detail, build_dataset, retry_failed
-from src.ai import summarize, classify, score, compare, export_detail, translate
+from src.analysis.ai import score, summarize, translate
+from src.analysis import export_detail, classify, compare
 from src.user_profile import UserProfile
 
 
@@ -25,6 +26,30 @@ def clear_file_if_exists(path: Path) -> None:
     if path.exists():
         path.unlink()
         logger.info("Removed old file: %s", path)
+
+
+def clear_detail_files(detail_dir: Path) -> None:
+    if not detail_dir.exists():
+        return
+
+    removed_count = 0
+
+    for path in detail_dir.glob("detail_*.html"):
+        try:
+            path.unlink()
+            removed_count += 1
+        except Exception as e:
+            logger.warning("Failed to remove file: %s (%s)", path, e)
+
+    for path in detail_dir.glob("detail_*.url.txt"):
+        try:
+            path.unlink()
+            removed_count += 1
+        except Exception as e:
+            logger.warning("Failed to remove file: %s (%s)", path, e)
+
+    logger.info("Cleared %d old detail files", removed_count)
+
 
 def ensure_has_detail_html(detail_dir: Path) -> None:
     ensure_file_exists(detail_dir, "detail_dir")
@@ -99,6 +124,9 @@ def run_collection_pipeline(
 
     clear_file_if_exists(fetch_detail.FAIL_LOG)
     clear_file_if_exists(retry_failed.RETRY_FAIL_LOG)
+    clear_detail_files(detail_dir)
+
+
     if urls:
         list_paths = fetch_list.main(
             urls=urls,

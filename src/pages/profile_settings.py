@@ -15,14 +15,6 @@ def inject_css() -> None:
             max-width: 900px;
         }
 
-        .page-shell {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 24px;
-            padding: 28px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-        }
-
         .page-title {
             font-size: 2.3rem;
             font-weight: 900;
@@ -35,6 +27,10 @@ def inject_css() -> None:
             color: #475569;
             line-height: 1.8;
             margin-bottom: 20px;
+        }
+
+        div[data-testid="stVerticalBlock"] div[data-testid="stButton"] > button {
+            border-radius: 14px;
         }
         </style>
         """,
@@ -68,24 +64,23 @@ def main() -> None:
     inject_css()
     init_profile_state()
 
-    with st.container():
-        top_left, top_right = st.columns([5, 1.2], vertical_alignment="center")
+    top_left, top_right = st.columns([1.4, 6], vertical_alignment="center")
 
-        with top_left:
-            st.markdown(
-                """
-                <div class="page-title">プロフィール設定</div>
-                <div class="page-subtitle">
-                    あなたの志向に合わせて、求人の見え方やおすすめの方向性を整えます。<br>
-                    入力した内容はこのアプリ内で保持されます。
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    with top_left:
+        if st.button("← 一覧へ戻る", use_container_width=True):
+            st.switch_page("app.py")
 
-        with top_right:
-            if st.button("← 一覧へ戻る", use_container_width=True):
-                st.switch_page("app.py")
+    with top_right:
+        st.markdown(
+            """
+            <div class="page-title">プロフィール設定</div>
+            <div class="page-subtitle">
+                あなたの志向に合わせて、求人の見え方やおすすめの方向性を整えます。<br>
+                入力した内容はこのアプリ内で保持されます。
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     with st.container(border=True):
         languages = st.multiselect(
@@ -158,27 +153,22 @@ def main() -> None:
             help="例: Tokyo, Osaka, Fukuoka",
         )
 
-        btn_col1, btn_col2 = st.columns(2)
+        if st.button("保存する", use_container_width=True):
+            preferred_locations = [
+                loc.strip()
+                for loc in preferred_locations_text.split(",")
+                if loc.strip()
+            ]
 
-        with btn_col1:
-            if st.button("保存する", use_container_width=True):
-                preferred_locations = [
-                    loc.strip()
-                    for loc in preferred_locations_text.split(",")
-                    if loc.strip()
-                ]
+            st.session_state["preferred_languages"] = languages
+            st.session_state["preferred_domains"] = domains
+            st.session_state["prefer_global"] = prefer_global
+            st.session_state["experience_level"] = experience_level
+            st.session_state["priority_mode"] = priority_mode
+            st.session_state["preferred_locations"] = preferred_locations
+            st.session_state["allow_remote"] = allow_remote
 
-                st.session_state["preferred_languages"] = languages
-                st.session_state["preferred_domains"] = domains
-                st.session_state["prefer_global"] = prefer_global
-                st.session_state["experience_level"] = experience_level
-                st.session_state["priority_mode"] = priority_mode
-                st.session_state["preferred_locations"] = preferred_locations
-                st.session_state["allow_remote"] = allow_remote
-
-                st.success("プロフィール設定を保存しました。")
-
-
+            st.success("プロフィール設定を保存しました。")
 
 
 if __name__ == "__main__":

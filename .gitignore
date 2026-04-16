@@ -1,17 +1,35 @@
-# 仮想環境
+# Virtual environment
 .venv/
+venv/
 
-# Pythonキャッシュ
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
-# PyCharm
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE / editor
 .idea/
+.vscode/
 
-# 実行生成物
-data/raw/
-data/processed/
-data/logs/
+# OS files
+.DS_Store
+Thumbs.db
 
-# 環境変数
+# Test / lint cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment / secrets
 .env
+.env.*
+.streamlit/secrets.toml
+
+
+# Optional: if you do NOT want generated outputs in repo
+# data/output/*.csv

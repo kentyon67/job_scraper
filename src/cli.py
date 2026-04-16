@@ -1,11 +1,10 @@
 import argparse
 from pathlib import Path
 
-from pandas import UInt16Dtype
-
 from src import fetch_list, fetch_detail, retry_failed, build_dataset
 from src.user_profile import build_user_profile_from_args
-from src.ai import summarize, classify, score, compare, export_detail,  pipeline, translate
+from src.analysis.ai import score, summarize
+from src.analysis import pipeline, export_detail, classify, compare
 
 
 def main() -> None:

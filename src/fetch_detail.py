@@ -154,10 +154,7 @@ def fetch_details_from_urls(
     max_jobs: int = DEFAULT_MAX_JOBS,
     session: requests.Session | None = None,
 ) -> list[str]:
-    """
-    URLリストから求人詳細を取得・保存する。
-    保存対象として処理したURL一覧を返す。
-    """
+
     if session is None:
         session = build_session()
 
@@ -168,12 +165,12 @@ def fetch_details_from_urls(
     failed_count = 0
 
     for i, url in enumerate(target_urls, start=1):
-        ok =fetch_and_save_detail(session, i, url)
+        ok = fetch_and_save_detail(session, i, url)
 
-    if ok :
-        success_count = success_count + 1
-    else:
-        failed_count = failed_count + 1
+        if ok:
+            success_count += 1
+        else:
+            failed_count += 1
 
     logger.info(
         "Detail fetch completed: target=%d success=%d failed=%d",
@@ -190,9 +187,9 @@ def fetch_details_from_list_path(
     base_url: str = DEFAULT_BASE_URL,
     session: requests.Session | None = None,
 ) -> list[str]:
-    """
-    1つの一覧HTMLファイルから求人URLを抽出し、詳細取得を行う。
-    """
+
+
+
     job_urls = extract_job_urls_from_file(list_path, base_url=base_url)
     return fetch_details_from_urls(job_urls, max_jobs=max_jobs, session=session)
 
@@ -202,10 +199,9 @@ def fetch_details_from_multiple_list_paths(
     max_jobs_per_list: int = DEFAULT_MAX_JOBS,
     base_url: str = DEFAULT_BASE_URL,
 ) -> list[str]:
-    """
-    複数の一覧HTMLファイルを順番に処理する。
-    成功可否にかかわらず、対象として処理したURL一覧を返す。
-    """
+
+
+
     session = build_session()
     processed_urls: list[str] = []
 
