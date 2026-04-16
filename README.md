@@ -103,3 +103,61 @@ Scheduled updates
 Author
 
 Built as a portfolio project for internship-ready Python engineering work.
+
+Tech Stack
+Python
+Streamlit
+pandas
+requests
+BeautifulSoup
+lxml
+OpenAI API
+Setup
+1. Clone repository
+git clone <your-repo-url>
+cd <your-repo-name>
+2. Create virtual environment
+python -m venv .venv
+3. Activate virtual environment
+Windows PowerShell
+.venv\Scripts\Activate.ps1
+macOS / Linux
+source .venv/bin/activate
+4. Install dependencies
+pip install -r requirements.txt
+5. Set OpenAI API key
+Windows PowerShell
+$env:OPENAI_API_KEY="your_api_key"
+macOS / Linux
+export OPENAI_API_KEY="your_api_key"
+How to Run
+Run data pipeline
+python -m src.cli pipeline --mode full --max-jobs 5
+Run Streamlit app
+streamlit run src/app.py
+Deployment
+
+This app can be deployed on Streamlit Community Cloud.
+
+For public demo deployment, the recommended approach is:
+
+Generate CSV files locally in advance
+Push the generated data/output/*.csv
+Deploy only the Streamlit UI for viewing
+
+This avoids exposing API-based analysis in the public app runtime.
+
+Notes
+OPENAI_API_KEY is required only for AI enrichment steps
+Public UI deployment can work without API calls if output CSV files are already prepared
+This project is currently designed around Greenhouse-style job pages and is planned to expand to multi-company / multi-source search in future versions
+Future Improvements
+Search-based UI
+Multi-company support
+Multi-language job support
+Database integration
+API backend
+Scheduled updates
+Author
+
+Built as a portfolio project for internship-ready Python engineering work.
