@@ -1,12 +1,12 @@
 import pandas as pd
 import streamlit as st
+from analysis.ai.score import score_rows
+
+CLASSIFIED_PATH = "data/output/jobs_classified.csv"
 
 
-LIST_PATH = "data/output/jobs_compared.csv"
-
-
-def load_list_data() -> pd.DataFrame:
-    return pd.read_csv(LIST_PATH).fillna("")
+def load_classified_data() -> pd.DataFrame:
+    return pd.read_csv(CLASSIFIED_PATH).fillna("")
 
 
 def inject_css() -> None:
@@ -168,6 +168,39 @@ def inject_css() -> None:
     )
 
 
+
+def build_user_profile_from_session_state() -> dict:
+    return {
+        "preferred_languages": st.session_state.get("preferred_languages", ["Python"]),
+        "preferred_domains": st.session_state.get("preferred_domains", ["Backend", "Data"]),
+        "prefer_global": st.session_state.get("prefer_global", True),
+        "experience_level": st.session_state.get("experience_level", "Beginner"),
+        "priority_mode": st.session_state.get("priority_mode", "Growth"),
+        "preferred_locations": st.session_state.get("preferred_locations", ["Tokyo"]),
+        "allow_remote": st.session_state.get("allow_remote", True),
+    }
+
+
+def rescore_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    profile = build_user_profile_from_session_state()
+    rows = df.to_dict(orient="records")
+    scored_rows = score_rows(rows, user_profile=profile)
+
+    scored_df = pd.DataFrame(scored_rows).fillna("")
+
+    for col in ["job_score", "fit_score", "total_score"]:
+        scored_df[col] = pd.to_numeric(scored_df[col], errors="coerce").fillna(0)
+
+    scored_df = scored_df.sort_values(
+        by=["total_score", "fit_score", "job_score"],
+        ascending=False,
+    ).reset_index(drop=True)
+
+    scored_df["rank"] = range(1, len(scored_df) + 1)
+
+    return scored_df
+
+
 def normalize_category(value: str) -> str:
     mapping = {
         "AI/ML": "AI・機械学習",
@@ -283,20 +316,34 @@ def render_profile_summary() -> None:
     )
 
 def render_filters(df_list: pd.DataFrame) -> pd.DataFrame:
-    st.sidebar.header("絞り込み")
+    with st.sidebar:
+        st.markdown("### 検索・絞り込み")
 
-    categories = ["すべて"] + sorted(
-        [normalize_category(c) for c in df_list["job_category"].astype(str).unique().tolist() if c]
-    )
-    selected_category = st.sidebar.selectbox("職種カテゴリ", categories)
+        keyword = st.text_input("キーワード検索", "")
 
-    locations = ["すべて"] + sorted(
-        [normalize_location(l) for l in df_list["location"].astype(str).unique().tolist() if l]
-    )
-    selected_location = st.sidebar.selectbox("勤務地", locations)
+        categories = ["すべて"] + sorted(
+            [normalize_category(x) for x in df_list["job_category"].astype(str).unique() if x]
+        )
+        selected_category = st.selectbox("職種カテゴリ", categories)
 
-    keyword = st.sidebar.text_input("タイトル検索")
-    min_score = st.sidebar.slider("最低総合スコア", 0, 100, 0, 1)
+        locations = ["すべて"] + sorted(
+            [str(x) for x in df_list["location"].astype(str).unique() if x]
+        )
+        selected_location = st.selectbox("勤務地", locations)
+
+        work_styles = ["すべて"] + sorted(
+            [str(x) for x in df_list["work_style"].astype(str).unique() if x]
+        )
+        selected_work_style = st.selectbox("勤務スタイル", work_styles)
+
+        employment_types = ["すべて"] + sorted(
+            [str(x) for x in df_list["employment_type"].astype(str).unique() if x]
+        )
+        selected_employment_type = st.selectbox("雇用形態", employment_types)
+
+        language_keyword = st.text_input("使用言語 / 技術タグ", "")
+
+        min_score = st.slider("最低総合スコア", min_value=0, max_value=100, value=0, step=5)
 
     filtered = df_list.copy()
 
@@ -307,13 +354,34 @@ def render_filters(df_list: pd.DataFrame) -> pd.DataFrame:
 
     if selected_location != "すべて":
         filtered = filtered[
-            filtered["location"].astype(str).apply(normalize_location) == selected_location
+            filtered["location"].astype(str) == selected_location
         ]
 
-    if keyword.strip():
+    if selected_work_style != "すべて":
         filtered = filtered[
-            filtered["title"].astype(str).str.contains(keyword, case=False, na=False)
+            filtered["work_style"].astype(str) == selected_work_style
         ]
+
+    if selected_employment_type != "すべて":
+        filtered = filtered[
+            filtered["employment_type"].astype(str) == selected_employment_type
+        ]
+
+    if keyword:
+        keyword_mask = (
+            filtered["title"].astype(str).str.contains(keyword, case=False, na=False)
+            | filtered["title_ja"].astype(str).str.contains(keyword, case=False, na=False)
+            | filtered["short_reason"].astype(str).str.contains(keyword, case=False, na=False)
+            | filtered["company_name"].astype(str).str.contains(keyword, case=False, na=False)
+        )
+        filtered = filtered[keyword_mask]
+
+    if language_keyword:
+        lang_mask = (
+            filtered["language_tags"].astype(str).str.contains(language_keyword, case=False, na=False)
+            | filtered["tech_keywords"].astype(str).str.contains(language_keyword, case=False, na=False)
+        )
+        filtered = filtered[lang_mask]
 
     filtered = filtered[
         pd.to_numeric(filtered["total_score"], errors="coerce").fillna(0) >= min_score
@@ -321,42 +389,56 @@ def render_filters(df_list: pd.DataFrame) -> pd.DataFrame:
 
     return filtered
 
-
 def render_job_card(row: pd.Series) -> bool:
-    total_score = int(float(row.get("total_score", 0) or 0))
-    fit_score = int(float(row.get("fit_score", 0) or 0))
-    job_score = int(float(row.get("job_score", 0) or 0))
+    rank = row.get("rank", "")
+    company_name = row.get("company_name", "")
+    title = row.get("title_ja", "") or row.get("title", "")
+    location = row.get("location", "")
+    category = normalize_category(row.get("job_category", ""))
+    short_reason = row.get("short_reason", "")
+    total_score = int(row.get("total_score", 0))
+    fit_score = int(row.get("fit_score", 0))
+    job_score = int(row.get("job_score", 0))
+    work_style = row.get("work_style", "")
+    employment_type = row.get("employment_type", "")
+    language_tags = row.get("language_tags", "")
 
     with st.container(border=True):
+        badge_html = ""
+        if category:
+            badge_html += f'<span class="badge badge-category">{category}</span>'
+        if location:
+            badge_html += f'<span class="badge badge-location">{location}</span>'
+
         st.markdown(
             f"""
-            <div>
-                <span class="rank-pill">#{row.get('rank', '')}</span>
-                <span class="badge badge-category">{normalize_category(row.get('job_category', ''))}</span>
-                <span class="badge badge-location">{normalize_location(row.get('location', ''))}</span>
-                <div class="card-title">{row.get('title_ja', '') or row.get('title', '')}</div>
-                <div class="muted">注目ポイント: {row.get('short_reason', '')}</div>
+            <div class="rank-pill">#{rank}</div>
+            <div class="card-title">{title}</div>
+            <div class="muted">{company_name}</div>
+            <div>{badge_html}</div>
+            <div class="muted" style="margin-top:8px;">
+                {work_style} / {employment_type}
             </div>
+            <div class="muted" style="margin-top:4px;">
+                {language_tags}
+            </div>
+            <div class="muted" style="margin-top:10px;">{short_reason}</div>
             """,
             unsafe_allow_html=True,
         )
 
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.metric("総合", total_score)
-        with c2:
-            st.metric("マッチ度", fit_score)
-        with c3:
-            st.metric("求人価値", job_score)
+        col1, col2, col3 = st.columns(3)
+        col1.metric("総合", total_score)
+        col2.metric("マッチ度", fit_score)
+        col3.metric("求人価値", job_score)
 
-        st.progress(total_score / 100)
+        st.progress(min(max(total_score, 0), 100) / 100)
 
         return st.button(
             "詳細を見る",
-            key=f"detail_btn_{row.get('url', '')}",
+            key=f"detail_{row.get('job_key', row.get('url', rank))}",
             use_container_width=True,
         )
-
 
 def main() -> None:
     st.set_page_config(
@@ -369,22 +451,25 @@ def main() -> None:
     init_profile_state()
 
     try:
-        df_list = load_list_data()
+        df_classified = load_classified_data()
     except FileNotFoundError:
-        st.error("一覧データが見つかりません。先にパイプラインを実行してください。")
+        st.error("分類済みデータが見つかりません。先に classify まで実行してください。")
         return
     except Exception:
-        st.error("一覧データの読み込みに失敗しました。")
+        st.error("分類済みデータの読み込みに失敗しました。")
         return
 
-    if df_list.empty:
+    if df_classified.empty:
         st.warning("表示できる求人データがまだありません。")
         return
+
+    # ここで UIプロフィールを使って再スコア
+    df_scored = rescore_dataframe(df_classified)
 
     render_hero()
     render_profile_summary()
 
-    filtered = render_filters(df_list)
+    filtered = render_filters(df_scored)
 
     st.markdown(
         f'<div class="section-title">求人一覧 <span class="muted">({len(filtered)}件)</span></div>',
@@ -396,11 +481,14 @@ def main() -> None:
         return
 
     cols = st.columns(2)
+
     for i, (_, row) in enumerate(filtered.iterrows()):
         with cols[i % 2]:
             clicked = render_job_card(row)
+
             if clicked:
                 st.session_state.selected_url = row.get("url", "")
+                st.session_state.selected_job_key = row.get("job_key", "")
                 try:
                     st.switch_page("pages/job_detail.py")
                 except Exception:

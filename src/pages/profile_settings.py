@@ -54,6 +54,24 @@ def init_profile_state() -> None:
             st.session_state[key] = value
 
 
+def save_profile_to_session_state(
+    languages: list[str],
+    domains: list[str],
+    prefer_global: bool,
+    experience_level: str,
+    priority_mode: str,
+    preferred_locations: list[str],
+    allow_remote: bool,
+) -> None:
+    st.session_state["preferred_languages"] = languages
+    st.session_state["preferred_domains"] = domains
+    st.session_state["prefer_global"] = prefer_global
+    st.session_state["experience_level"] = experience_level
+    st.session_state["priority_mode"] = priority_mode
+    st.session_state["preferred_locations"] = preferred_locations
+    st.session_state["allow_remote"] = allow_remote
+
+
 def main() -> None:
     st.set_page_config(
         page_title="JobFit | プロフィール設定",
@@ -75,23 +93,36 @@ def main() -> None:
             """
             <div class="page-title">プロフィール設定</div>
             <div class="page-subtitle">
-                あなたの志向に合わせて、求人の見え方やおすすめの方向性を整えます。<br>
-                入力した内容はこのアプリ内で保持されます。
+                あなたの志向に合わせて、求人のおすすめ順や見え方を調整します。<br>
+                保存後、一覧ページでスコアが再計算されます。
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    with st.container(border=True):
+    with st.form("profile_form"):
         languages = st.multiselect(
             "希望言語",
-            ["Python", "Java", "Go", "JavaScript", "TypeScript", "Scala", "SQL"],
+            [
+                "Python", "Java", "Go", "JavaScript", "TypeScript",
+                "Scala", "SQL", "Kotlin", "Rust", "C++", "C#",
+                "PHP", "Ruby"
+            ],
             default=st.session_state.get("preferred_languages", ["Python"]),
         )
 
         domains = st.multiselect(
             "希望領域",
-            ["Backend", "Data", "AI/ML", "Frontend", "Infra/SRE", "Security", "Mobile", "Product"],
+            [
+                "Backend",
+                "Data",
+                "AI/ML",
+                "Frontend",
+                "Infra/SRE",
+                "Security",
+                "Mobile",
+                "Product",
+            ],
             default=st.session_state.get("preferred_domains", ["Backend", "Data"]),
             format_func=lambda x: {
                 "Backend": "バックエンド",
@@ -106,11 +137,13 @@ def main() -> None:
         )
 
         toggle_col1, toggle_col2 = st.columns(2)
+
         with toggle_col1:
             prefer_global = st.toggle(
                 "グローバル環境を重視する",
                 value=st.session_state.get("prefer_global", True),
             )
+
         with toggle_col2:
             allow_remote = st.toggle(
                 "リモート勤務を許容する",
@@ -143,32 +176,44 @@ def main() -> None:
                 format_func=lambda x: {
                     "Growth": "成長重視",
                     "Balanced": "バランス重視",
-                    "Realistic": "現実重視",
+                    "Realistic": "現実性重視",
                 }.get(x, x),
             )
 
-        preferred_locations_text = st.text_input(
-            "希望勤務地（カンマ区切り）",
-            value=", ".join(st.session_state.get("preferred_locations", ["Tokyo"])),
-            help="例: Tokyo, Osaka, Fukuoka",
+        preferred_locations = st.multiselect(
+            "希望勤務地",
+            [
+                "Tokyo",
+                "Osaka",
+                "Kyoto",
+                "Hokkaido",
+                "Fukuoka",
+                "Nagoya",
+                "Remote",
+                "Japan",
+            ],
+            default=st.session_state.get("preferred_locations", ["Tokyo"]),
         )
 
-        if st.button("保存する", use_container_width=True):
-            preferred_locations = [
-                loc.strip()
-                for loc in preferred_locations_text.split(",")
-                if loc.strip()
-            ]
+        submit = st.form_submit_button("保存して一覧に反映", use_container_width=True)
 
-            st.session_state["preferred_languages"] = languages
-            st.session_state["preferred_domains"] = domains
-            st.session_state["prefer_global"] = prefer_global
-            st.session_state["experience_level"] = experience_level
-            st.session_state["priority_mode"] = priority_mode
-            st.session_state["preferred_locations"] = preferred_locations
-            st.session_state["allow_remote"] = allow_remote
+    if submit:
+        save_profile_to_session_state(
+            languages=languages,
+            domains=domains,
+            prefer_global=prefer_global,
+            experience_level=experience_level,
+            priority_mode=priority_mode,
+            preferred_locations=preferred_locations,
+            allow_remote=allow_remote,
+        )
 
-            st.success("プロフィール設定を保存しました。")
+        st.success("プロフィールを保存しました。一覧ページでスコアに反映されます。")
+
+        try:
+            st.switch_page("app.py")
+        except Exception:
+            st.info("一覧ページへ戻って反映を確認してください。")
 
 
 if __name__ == "__main__":
