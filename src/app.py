@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-from src.analysis.ai.score import score_rows
+from analysis.ai.score import score_rows
 
 CLASSIFIED_PATH = "data/output/jobs_classified.csv"
 
