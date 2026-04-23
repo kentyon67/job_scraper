@@ -5,6 +5,7 @@ from pathlib import Path
 
 from openai import OpenAI
 
+from src.analysis.ai.score import  calculate_job_score
 
 DEFAULT_INPUT_PATH = Path("data/output/jobs_translated.csv")
 DEFAULT_OUTPUT_PATH = Path("data/output/jobs_classified.csv")
@@ -188,6 +189,11 @@ def classify_jobs(
             new_row["global_related"] = result.get("global_related", "")
             new_row["tech_keywords"] = normalize_string_list(result.get("tech_keywords", []))
 
+            job_score, job_reason = calculate_job_score(new_row)
+
+            new_row["job_score"] = job_score
+            new_row["job_reason"] = job_reason
+
             classified_rows.append(new_row)
             logger.info("Completed row %d/%d", i, len(rows))
 
@@ -204,6 +210,12 @@ def classify_jobs(
             new_row["experience_level_hint"] = "Unknown"
             new_row["global_related"] = "No"
             new_row["tech_keywords"] = ""
+
+            job_score, job_reason = calculate_job_score(new_row)
+
+            new_row["job_score"] = job_score
+            new_row["job_reason"] = job_reason
+
             classified_rows.append(new_row)
 
     if not classified_rows:

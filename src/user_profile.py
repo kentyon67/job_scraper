@@ -26,27 +26,36 @@ DEFAULT_USER_PROFILE: UserProfile = {
 def build_user_profile_from_args(args) -> UserProfile:
     profile = DEFAULT_USER_PROFILE.copy()
 
-    if args.lang:
-        profile["preferred_languages"] = [lang.lower() for lang in args.lang]
+    lang = getattr(args, "lang", None)
+    domain = getattr(args, "domain", None)
+    global_flag = getattr(args, "global_flag", False)
+    exp = getattr(args, "exp", None)
+    mode_profile = getattr(args, "mode_profile", None)
+    mode = getattr(args, "mode", None)
+    loc = getattr(args, "loc", None)
+    remote = getattr(args, "remote", False)
 
-    if args.domain:
-        profile["preferred_domains"] = [domain.lower() for domain in args.domain]
+    if lang:
+      profile["preferred_languages"] = [str(x).lower() for x in lang]
 
-    if args.global_flag:
+    if domain:
+        profile["preferred_domains"] = [str(x).lower() for x in domain]
+
+    if global_flag:
         profile["prefer_global"] = True
 
-    if args.exp:
-        profile["experience_level"] = args.exp.lower()
+    if exp:
+        profile["experience_level"] = str(exp).lower()
 
-    if hasattr(args, "mode_profile") and args.mode_profile:
-        profile["priority_mode"] = args.mode_profile.lower()
-    elif hasattr(args, "mode") and args.mode:
-        profile["priority_mode"] = args.mode.lower()
+    if mode_profile:
+        profile["priority_mode"] = str(mode_profile).lower()
+    elif mode and mode not in {"full", "analysis"}:
+        profile["priority_mode"] = str(mode).lower()
 
-    if args.loc:
-        profile["preferred_locations"] = [loc.lower() for loc in args.loc]
+    if loc:
+        profile["preferred_locations"] = [str(x).lower() for x in loc]
 
-    if args.remote:
+    if remote:
         profile["allow_remote"] = True
 
     return profile
