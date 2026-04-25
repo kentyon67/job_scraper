@@ -208,6 +208,8 @@ def main() -> None:
             allow_remote=allow_remote,
         )
 
+        st.session_state["profile_set"] = True
+
         st.success("プロフィールを保存しました。一覧ページでスコアに反映されます。")
 
         try:

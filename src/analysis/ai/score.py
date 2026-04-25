@@ -279,7 +279,9 @@ def score_row(
 ) -> dict[str, str]:
     job_score, job_reasons = calculate_job_score(row)
     fit_score, fit_reasons = calculate_fit_score(row, user_profile=user_profile)
-    total_score =  job_score + fit_score
+
+    # 200点満点: job_score 100 + fit_score 100
+    total_score = job_score + fit_score
 
     new_row = dict(row)
     new_row["job_score"] = str(job_score)
@@ -287,6 +289,7 @@ def score_row(
     new_row["total_score"] = str(total_score)
     new_row["score_reason"] = build_score_reason(job_reasons, fit_reasons)
     new_row["short_reason"] = build_short_reason(new_row, job_reasons, fit_reasons)
+
     return new_row
 
 
