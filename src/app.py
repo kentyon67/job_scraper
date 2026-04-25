@@ -10,6 +10,9 @@ def load_classified_data():
 
 
 def build_user_profile():
+    if "profile_set" not in st.sesseion_state :
+        return None
+
     return {
         "preferred_languages": st.session_state.get("preferred_languages", ["Python"]),
         "preferred_domains": st.session_state.get("preferred_domains", ["Backend"]),
@@ -75,9 +78,11 @@ def render_card(row):
     c2.metric("マッチ", int(row["fit_score"]))
     c3.metric("価値", int(row["job_score"]))
 
-    if st.button("詳細", key=row["job_key"]):
-        st.session_state.selected_job_key = row["job_key"]
-        st.switch_page("pages/job_detail.py")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("詳細", key=row["job_key"], use_container_width=True):
+            st.session_state.selected_job_key = row["job_key"]
+            st.switch_page("pages/job_detail.py")
 
 
 def main():
@@ -88,6 +93,9 @@ def main():
     filtered = filter_dataframe(df)
 
     scored = rescore(filtered)
+
+    if st.button("⚙️ プロフィール設定"):
+        st.switch_page("pages/profile_settings.py")
 
     st.write(f"{len(scored)} 件")
 

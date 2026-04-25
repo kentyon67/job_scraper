@@ -279,7 +279,7 @@ def score_row(
 ) -> dict[str, str]:
     job_score, job_reasons = calculate_job_score(row)
     fit_score, fit_reasons = calculate_fit_score(row, user_profile=user_profile)
-    total_score = min(100, job_score + fit_score)
+    total_score =  job_score + fit_score
 
     new_row = dict(row)
     new_row["job_score"] = str(job_score)
