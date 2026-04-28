@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
 
-
 from src.analysis.ai.score import score_row
 
 
@@ -47,6 +46,15 @@ def inject_css() -> None:
     st.markdown(
         """
         <style>
+        
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+
+        [data-testid="collapsedControl"] {
+            display: none;
+        }
+        
         .main {
             background: #f8fafc;
         }
@@ -115,10 +123,11 @@ def main() -> None:
     inject_css()
 
     if st.button("← 一覧に戻る"):
-        st.switch_page("app.py")
+        st.switch_page("streamlit_app.py")
 
     selected_job_key = st.session_state.get("selected_job_key", "")
     selected_url = st.session_state.get("selected_url", "")
+
 
     if not selected_job_key and not selected_url:
         st.warning("詳細表示する求人が選ばれていません。一覧ページから選んでください。")
@@ -172,11 +181,12 @@ def main() -> None:
     )
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("総合スコア", f"{total_score}/200")
-    c2.metric("マッチ度", f"{fit_score}/100")
-    c3.metric("求人価値", f"{job_score}/100")
+    c1.metric("総合", total_score)
+    c2.metric("マッチ度", fit_score)
+    c3.metric("求人価値", job_score)
 
     st.progress(min(max(total_score, 0), 200) / 200)
+    st.caption("総合スコアは求人価値100点 + マッチ度100点の200点満点です。")
 
     tab1, tab2, tab3, tab4 = st.tabs(["概要", "評価理由", "応募条件", "仕事内容"])
 

@@ -86,7 +86,7 @@ def main() -> None:
 
     with top_left:
         if st.button("← 一覧へ戻る", use_container_width=True):
-            st.switch_page("app.py")
+            st.switch_page("streamlit_app.py")
 
     with top_right:
         st.markdown(

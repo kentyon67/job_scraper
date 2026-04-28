@@ -164,6 +164,39 @@ def inject_css() -> None:
     )
 
 
+def normalize_work_style(value: str) -> str:
+    return {
+        "Remote": "リモート",
+        "Hybrid": "ハイブリッド",
+        "Onsite": "出社",
+        "Unknown": "不明",
+    }.get(str(value), str(value))
+
+
+def normalize_employment_type(value: str) -> str:
+    return {
+        "Internship": "インターン",
+        "NewGrad": "新卒",
+        "FullTime": "正社員",
+        "Contract": "契約",
+        "PartTime": "アルバイト・パート",
+        "Unknown": "不明",
+    }.get(str(value), str(value))
+
+
+def normalize_experience_level(value: str) -> str:
+    return {
+        "Beginner": "初学者向け",
+        "Intermediate": "中級者向け",
+        "Advanced": "上級者向け",
+        "Unknown": "不明",
+    }.get(str(value), str(value))
+
+
+def normalize_yes_no(value: str) -> str:
+    return "あり" if str(value).lower() == "yes" else "なし"
+
+
 def init_profile_state() -> None:
     defaults = {
         "profile_set": False,
@@ -292,33 +325,58 @@ def render_profile_summary() -> None:
 def render_filters(df: pd.DataFrame) -> pd.DataFrame:
     filtered = df.copy()
 
-    with st.sidebar:
-        st.markdown("### 検索・絞り込み")
+    st.markdown('<div class="section-title">検索・絞り込み</div>', unsafe_allow_html=True)
 
-        keyword = st.text_input("キーワード検索", "")
-
-        categories = ["すべて"] + sorted(
-            [x for x in filtered["job_category"].astype(str).unique() if x]
-        )
-        selected_category = st.selectbox(
-            "職種カテゴリ",
-            categories,
-            format_func=lambda x: "すべて" if x == "すべて" else normalize_category(x),
+    with st.container(border=True):
+        keyword = st.text_input(
+            "キーワード",
+            "",
+            placeholder="例: Python, Backend, リモート, AI, Tokyo",
         )
 
-        work_styles = ["すべて"] + sorted(
-            [x for x in filtered["work_style"].astype(str).unique() if x]
-        )
-        selected_work_style = st.selectbox("勤務スタイル", work_styles)
+        col1, col2, col3 = st.columns(3)
 
-        employment_types = ["すべて"] + sorted(
-            [x for x in filtered["employment_type"].astype(str).unique() if x]
-        )
-        selected_employment_type = st.selectbox("雇用形態", employment_types)
+        with col1:
+            categories = ["すべて"] + sorted(
+                [x for x in filtered["job_category"].astype(str).unique() if x]
+            )
+            selected_category = st.selectbox(
+                "職種",
+                categories,
+                format_func=lambda x: "すべて" if x == "すべて" else normalize_category(x),
+            )
 
-        language_keyword = st.text_input("使用言語 / 技術タグ", "")
+        with col2:
+            work_styles = ["すべて"] + sorted(
+                [x for x in filtered["work_style"].astype(str).unique() if x]
+            )
+            selected_work_style = st.selectbox(
+                "勤務形態",
+                work_styles,
+                format_func=lambda x: "すべて" if x == "すべて" else normalize_work_style(x),
+            )
 
-        min_score = st.slider("最低総合スコア", 0, 200, 0, 10)
+        with col3:
+            employment_types = ["すべて"] + sorted(
+                [x for x in filtered["employment_type"].astype(str).unique() if x]
+            )
+            selected_employment_type = st.selectbox(
+                "雇用形態",
+                employment_types,
+                format_func=lambda x: "すべて" if x == "すべて" else normalize_employment_type(x),
+            )
+
+        col4, col5 = st.columns([2, 1])
+
+        with col4:
+            language_keyword = st.text_input(
+                "使用言語・技術",
+                "",
+                placeholder="例: Python, Go, AWS, Docker",
+            )
+
+        with col5:
+            min_score = st.slider("最低総合スコア", 0, 200, 0, 10)
 
     if selected_category != "すべて":
         filtered = filtered[filtered["job_category"].astype(str) == selected_category]
@@ -365,6 +423,7 @@ def render_filters(df: pd.DataFrame) -> pd.DataFrame:
     return filtered
 
 
+
 def render_job_card(row: pd.Series) -> None:
     rank = row.get("rank", "")
     title = row.get("title_ja", "") or row.get("title", "")
@@ -373,8 +432,8 @@ def render_job_card(row: pd.Series) -> None:
     fit_score = int(row.get("fit_score", 0))
     job_score = int(row.get("job_score", 0))
     category = normalize_category(row.get("job_category", ""))
-    work_style = row.get("work_style", "")
-    employment_type = row.get("employment_type", "")
+    work_style = normalize_work_style(row.get("work_style", ""))
+    employment_type = normalize_employment_type(row.get("employment_type", ""))
     language_tags = row.get("language_tags", "")
     ai_summary = str(row.get("ai_summary", "")).strip()
 
@@ -412,9 +471,9 @@ def render_job_card(row: pd.Series) -> None:
             )
 
         c1, c2, c3 = st.columns(3)
-        c1.metric("総合", f"{total_score}/200")
-        c2.metric("マッチ度", f"{fit_score}/100")
-        c3.metric("求人価値", f"{job_score}/100")
+        c1.metric("総合", total_score)
+        c2.metric("マッチ度", fit_score)
+        c3.metric("求人価値", job_score)
 
         st.progress(min(max(total_score, 0), 200) / 200)
 
