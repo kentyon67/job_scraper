@@ -445,9 +445,7 @@ def render_job_card(row: pd.Series) -> None:
     language_tags = row.get("language_tags", "")
     ai_summary = str(row.get("ai_summary", "")).strip()
 
-    with st.container():
-        st.markdown('<div class="job-card">', unsafe_allow_html=True)
-
+    with st.container(border=True):
         st.markdown(f'<span class="rank-pill">#{rank}</span>', unsafe_allow_html=True)
 
         st.markdown(
@@ -498,7 +496,6 @@ def render_job_card(row: pd.Series) -> None:
                 st.session_state.selected_url = row.get("url", "")
                 st.switch_page("pages/job_detail.py")
 
-        st.markdown('</div>', unsafe_allow_html=True)
 
 def main() -> None:
     st.set_page_config(
